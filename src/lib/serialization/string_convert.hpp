@@ -1,8 +1,8 @@
 #pragma once
 
 #include <sstream>
-#include "iserializestream.h"
-#include "oserializestream.h"
+#include "iserializestream.hpp"
+#include "oserializestream.hpp"
 
 namespace sae {
     namespace serialization {
@@ -22,7 +22,7 @@ namespace sae {
             std::stringstream stream;
             OSerializeStream encoder(&stream);
             encoder << t;
-
+            
             return stream.str();
         }
     }

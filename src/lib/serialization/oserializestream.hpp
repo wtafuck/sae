@@ -41,8 +41,6 @@ namespace custom_serialization_impl {
             if (std::is_pod<T>::value) {
                 ostr.write(reinterpret_cast<const char*>(&t), sizeof(T));
             } else {
-                std::cout << typeid(T).name() << std::endl;
-                printf("Error caused by POD!\n");
                 // TODO throw exception here.
             }
         }
