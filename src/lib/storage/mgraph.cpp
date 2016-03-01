@@ -6,7 +6,7 @@
 #include <vector>
 #include <sstream>
 #include <fstream>
-#include "serialization/serialization.h"
+#include "serialization/serialization.hpp"
 
 #include "mmap_file.h"
 #include "mgraph.h"
@@ -337,7 +337,6 @@ struct MappedGraphImpl : public MappedGraph {
         for (int i=0; i<edge_data_type_count; i++) {
             mg->etypelist_file[i].reset(MMapFile::Open(concat(prefix, concat(".etypelist", i))));
             mg->g.edge_type_list[i] = (EdgeListItem*) mg->etypelist_file[i]->Data();
-            
             std::ifstream fin(concat(prefix, concat(".edata", i)), std::fstream::binary);
             sae::serialization::ISerializeStream decoder(&fin);
             decoder >> mg->g.edge_data[i];

@@ -8,12 +8,14 @@
 #include "storage/mgraph.h"
 #include "report/table_generator.h"
 #include "influence/influence_maximization.h"
+#include "basic/shortest_path.h"
 #include <iostream>
 #include <fstream>
 #include <cstdio>
 #include <ctime>
 #include <map>
 #include <cstdlib>
+#include "social_analysis/social_main.h"
 
 using namespace std;
 using namespace sae::io;
@@ -22,10 +24,12 @@ DEF_ARGUMENT_CLASS(
 	Argument,
 	std::string,	input,		"",				REQUIRED,   OPT_SLH(-i, --input, "input data"),
     std::string,    output,     "./output",     OPTIONAL,   OPT_SLH(-o, --output, "output direction"),
-    std::string,    task,       "",             OPTIONAL,   OPT_SLH(-t, --task, "declear task:\nim(inf-max),dd(degree),pr(PageRank),tr(triangle)\n"),
+    std::string,    task,       "",             OPTIONAL,   OPT_SLH(-t, --task, "declear task:\nim(inf-max),dd(degree),pr(PageRank),tr(triangle),sp(ShortestPath),social(social analysis)\n"),
     int,            para_im_k,  "0",            OPTIONAL,   OPT_SLH(-k, --seed, "seed size"),
     std::string,    para_edge_w,    "rand",     OPTIONAL,   OPT_SLH(-w, --weight, "edge weights:rand,const,deg\n"),
-    double,         para_const, 0.0,            OPTIONAL,   OPT_SLH(-c, -constant, "constant value")
+    double,         para_const, 0.0,            OPTIONAL,   OPT_SLH(-c, -constant, "constant value"),
+    int,            para_start, "0",            OPTIONAL,   OPT_SLH(-s, --start, "start point"),
+    int,            para_end, "1",            OPTIONAL,   OPT_SLH(-e, --end, "end point")     
 );
 
 string output_dir;
@@ -44,8 +48,10 @@ void makeFakeData(int numVertex=10, double p = 0.1) {
 			edge = make_pair(x, y);
 		} while (edges.find(edge) != edges.end());
 		edges[edge] = true;
-		graph.AddEdge(edge.first, edge.second, 0);
-		//cout << edge.first << " " << edge.second << endl;
+        int value = rand() % 50;
+		graph.AddEdge(edge.first, edge.second, value);
+        graph.AddEdge(edge.second, edge.first, value);
+		cout << edge.first << " " << edge.second << endl;
 	}
 	system("mkdir -p fake");
 	graph.Save("./fake/graph");
@@ -98,17 +104,36 @@ void runInfluenceMaximization(MappedGraph *graph, int K, double W) {
     cout << "Running time of Influence_Maximization: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 }
 
+void runShortestPath(MappedGraph *graph, long long start, long long end, bool require_path = false)
+{
+    time_t start_time = clock();
+    Shortest_Path sp(graph);
+    std::vector<sae::io::EdgeIteratorPtr> ans;
+    double len = sp.solve(start,end,ans);
+    if(len < 0){
+        cout<<"There is no path between "<<start<<" and "<<end<<endl;
+        return;
+    }
+    cout<<" Length of Shortest Path between "<<start<<" and "<<end<<" is "<<len<<endl;
+    if(require_path){
+        cout<<"Path: "<<endl<<start<<endl;
+        for(auto iter = ans.begin();iter != ans.end();iter++)
+            cout<<(*iter)->TargetId()<<endl;
+    }
+    time_t end_time = clock();
+    cout << "Running time of Shortest_Path: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
+}
+
 int main(int argc, char **argv) {
-    int vertexNum = 100;
-    double edgeProb = 0.1;
+    int vertexNum = 8;
+    double edgeProb = 0.4;
     srand(time(NULL));
     //makeFakeData(vertexNum, edgeProb);
-    
+    //return 0;
 	// parse arguments
 	Argument args;
 	if (! args.parse_args(argc, argv)) 
         return 1;
-
     // declare input file
     if (args.input().length() == 0)
         return 1;
@@ -163,7 +188,12 @@ int main(int argc, char **argv) {
     if (task == "dd") {
         runDegreeDistribution(graph);
     }
-	
+	if (task == "sp") {
+        runShortestPath(graph,args.para_start(),args.para_end(),true);
+    }
+    if (task == "social")
+        social_main(graph);
+    
     // generate a graph
     if (task == "gg") {
         makeFakeData(vertexNum, edgeProb);

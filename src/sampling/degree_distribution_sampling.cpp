@@ -8,7 +8,7 @@
 #include <map>
 #include <algorithm>
 #include <utility>
-
+#include <cmath>
 
 using namespace std;
 using namespace sae::io;

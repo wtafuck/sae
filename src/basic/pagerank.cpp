@@ -81,7 +81,7 @@ vector<Pair> PageRank::solve() {
 		}  else node_edge[node_map[y]].push_back(x);
 	}
 
-	vector<vector<double>> Matr;
+	vector<vector<double> > Matr;
 	vector<double> row;
 	Matr.clear();
 	row.clear();

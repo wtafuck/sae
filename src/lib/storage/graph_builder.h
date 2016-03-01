@@ -8,7 +8,7 @@
 #include <cstring>
 #include <string>
 
-#include "serialization/serialization.h"
+#include "serialization/serialization.hpp"
 
 namespace sae {
 namespace io {
@@ -125,6 +125,7 @@ namespace io {
 
             std::string code = sae::serialization::convert_to_string(data);
 
+//        std::cerr<<"datasave3: "<<data<<std::endl; 
             edges.push_back(edge_with_data(sid, tid, id, local_id, code, data_type_rank));
         }
 
