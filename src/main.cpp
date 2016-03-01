@@ -137,6 +137,13 @@ int main(int argc, char **argv) {
     // declare input file
     if (args.input().length() == 0)
         return 1;
+    
+    string task = args.task();
+    // generate a graph
+    if (task == "gg") {
+        makeFakeData(vertexNum, edgeProb);
+        cout << "generate success!" << endl;
+    }
     MappedGraph *graph = MappedGraph::Open(args.input().c_str());
     cout << "===== graph information =====" << endl;
     cout << "#vertices: " << graph -> VertexCount() << endl;
@@ -150,7 +157,6 @@ int main(int argc, char **argv) {
     system(("mkdir -p " + output_dir).c_str());
         
     //declare task
-    string task = args.task();
 
     // call influence maximization
     if (task == "im") {
@@ -193,11 +199,7 @@ int main(int argc, char **argv) {
     }
     if (task == "social")
         social_main(graph);
-    
-    // generate a graph
-    if (task == "gg") {
-        makeFakeData(vertexNum, edgeProb);
-    }
+
 	//testTable();
 	//makeFakeData(vertexNum, edgeProb);
 	//testTriangle();
