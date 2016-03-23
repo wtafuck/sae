@@ -9,6 +9,7 @@
 #include "report/table_generator.h"
 #include "influence/influence_maximization.h"
 #include "basic/shortest_path.h"
+#include "basic/propensity_score_matching.h"
 #include <iostream>
 #include <fstream>
 #include <cstdio>
@@ -34,25 +35,73 @@ DEF_ARGUMENT_CLASS(
 
 string output_dir;
 
-void makeFakeData(int numVertex=10, double p = 0.1) {
+void makeFakeData(int numVertex=10, double p = 0.1, int properties_num = 3) {
 	//int numEdge = rand() % (numVertex * numVertex / 3) + numVertex;
     int numEdge = (numVertex * (numVertex - 1)) / 2 * p;
 	GraphBuilder<int> graph;
-	for (int i = 0; i < numVertex; ++i) graph.AddVertex(i, 0);
-	map<pair<int, int>, bool> edges;
-	for (int i = 0; i < numEdge; ++i) {
-		pair<int, int> edge;
-		do {
-			int x = rand() % (numVertex - 1);
-			int y = rand() % (numVertex - x - 1) + x + 1;
-			edge = make_pair(x, y);
-		} while (edges.find(edge) != edges.end());
-		edges[edge] = true;
-        int value = rand() % 50;
-		graph.AddEdge(edge.first, edge.second, value);
-        graph.AddEdge(edge.second, edge.first, value);
-		cout << edge.first << " " << edge.second << endl;
-	}
+    vector< vector<double> > all_properties(numVertex, std::vector<double>(properties_num));
+    map<pair<int, int>, bool> edges;
+    for (int i = 0; i < numEdge; ++i) {
+        pair<int, int> edge;
+        do {
+            int x = rand() % (numVertex - 1);
+            int y = rand() % (numVertex - x - 1) + x + 1;
+            edge = make_pair(x, y);
+        } while (edges.find(edge) != edges.end());
+        edges[edge] = true;
+    }
+	for (int i = 0; i < numVertex; ++i) 
+    {
+        for(int j = 1;j < properties_num; j++)
+            all_properties[i][j] = (rand() % 100) / 100.0;
+    }
+    for(int i = 0; i < numVertex; i++)
+        {
+            for(int j = 0; j < numVertex; j++)
+                    if(edges.find(make_pair(i,j)) != edges.end() || edges.find(make_pair(j,i)) != edges.end() )
+                    {
+                        //balance properties of i,j
+                        double & x = all_properties[i][1];
+                        double & y = all_properties[j][1]; 
+                        double xx = x, yy = y;
+                        double alpha = 0.4;
+                        x = alpha * xx + (1 - alpha) * yy;
+                        y = (1 - alpha) * xx + alpha * yy;
+                    }
+        }
+    for(int i = 0; i < numVertex; i++){
+        vector<double>& properties = all_properties[i];
+        //homophily's influence
+        int possibility = (int)(properties[1] * 20) + 1;
+        if(rand() % possibility == 0) properties[0] = 1;
+            else properties[0] = -1;
+    }
+        for(int i = 0; i < numVertex; i++)
+        if(all_properties[i][0] > 0)
+        {
+            // opinion leader's influence
+            for(int j = 0; j < numVertex; j++)
+                if(all_properties[j][0] < 0)
+                    if(edges.find(make_pair(i,j)) != edges.end() || edges.find(make_pair(j,i)) != edges.end() )
+                    {
+                        if(rand() % 600 == 0) all_properties[j][0] = 1;
+                    }
+        }
+    for(int i = 0;i< numVertex; i++)
+    {
+        graph.AddVertex(i, all_properties[i]);
+        //cout<<"v: id "<<i<<" "<<all_properties[i][0] <<" "<< all_properties[i][1]<<endl;
+    }
+    for(int i = 0; i< numVertex; i++)
+        for(int j = i + 1; j< numVertex; j++)
+        if(edges.find(make_pair(i, j)) != edges.end())
+        {
+            pair<int ,int > edge = make_pair(i, j);
+            int value = rand() % 50;
+            graph.AddEdge(edge.first, edge.second, value);
+            graph.AddEdge(edge.second, edge.first, value);
+            //cout << edge.first << " " << edge.second << endl;
+        }
 	system("mkdir -p fake");
 	graph.Save("./fake/graph");
 }
@@ -123,13 +172,23 @@ void runShortestPath(MappedGraph *graph, long long start, long long end, bool re
     time_t end_time = clock();
     cout << "Running time of Shortest_Path: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 }
+void runTest(MappedGraph *graph)
+{
+    time_t start_time = clock();
+    Propensity_Score_Matching psm(graph);
+    double ans = psm.solve(1);
+    double compare_ans = psm.compare(1);
+    cout<<"ans of psm is "<<ans<<endl;
+    cout<<"compare_ans is"<<compare_ans<<endl;
+    time_t end_time = clock();
+    cout << "Running time of Propensity_Score_Matching: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
+}
 
 int main(int argc, char **argv) {
-    int vertexNum = 8;
-    double edgeProb = 0.4;
+    int vertexNum = 2000;
+    double edgeProb = 0.005;
     srand(time(NULL));
-    //makeFakeData(vertexNum, edgeProb);
-    //return 0;
+    //makeFakeData(vertexNum, edgeProb);return 0;
 	// parse arguments
 	Argument args;
 	if (! args.parse_args(argc, argv)) 
@@ -195,7 +254,8 @@ int main(int argc, char **argv) {
         runDegreeDistribution(graph);
     }
 	if (task == "sp") {
-        runShortestPath(graph,args.para_start(),args.para_end(),true);
+        //runShortestPath(graph,args.para_start(),args.para_end(),true);
+        runTest(graph);
     }
     if (task == "social")
         social_main(graph);

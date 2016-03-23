@@ -8,14 +8,14 @@
 using namespace std;
 using namespace sae::io;
 
-Propensity_Score_Matching::Propensity_Score_Matching(MappedGraph *graph)
+Propensity_Score_Matching_Sampling::Propensity_Score_Matching_Sampling(MappedGraph *graph)
     :Solver(graph) {
 }
 
-Propensity_Score_Matching::~Propensity_Score_Matching() {
+Propensity_Score_Matching_Sampling::~Propensity_Score_Matching_Sampling() {
 }
 
-double Propensity_Score_Matching::solve(int influence_neighbours)
+double Propensity_Score_Matching_Sampling::solve(int influence_neighbours)
 {
     int n = graph->VertexCount(); assert(n >= 3);
     vector< vector<double> > properties;
@@ -102,7 +102,7 @@ double Propensity_Score_Matching::solve(int influence_neighbours)
 
 }
 
-vector<double> Propensity_Score_Matching::logistic_regression
+vector<double> Propensity_Score_Matching_Sampling::logistic_regression
     (const std::vector< std::vector<double> >& data, const std::vector<bool> is_treated)
 {
     double alpha = 0.01;
@@ -128,7 +128,7 @@ vector<double> Propensity_Score_Matching::logistic_regression
     return weights;
 }
 
-double Propensity_Score_Matching::compare(int influence_neighbours)
+double Propensity_Score_Matching_Sampling::compare(int influence_neighbours)
 {
     int n = graph->VertexCount(); assert(n >= 3);
     vector< vector<double> > properties;
