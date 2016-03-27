@@ -97,7 +97,7 @@ double Propensity_Score_Matching::solve(int influence_neighbours)
         if(properties[treated_nodes[i]][0] > 0.1) n1++;
     for(int i = 0; i < untreated_nodes.size(); i++)
         if(properties[untreated_nodes[i]][0] > 0.1) n2++;
-    cout<< n1 << " "<< n2 <<" sum = "<<treated_nodes.size()<<endl;
+    //cout<< n1 << " "<< n2 <<" sum = "<<treated_nodes.size()<<endl;
     return 1.0 * n1 / n2;
 
 }
@@ -162,8 +162,8 @@ double Propensity_Score_Matching::compare(int influence_neighbours)
         if(properties[treated_nodes[i]][0] > 0.1) n1++;
     for(int i = 0; i < untreated_nodes.size(); i++)
         if(properties[untreated_nodes[i]][0] > 0.1) n2++;
-    cout<< "compare"<<endl<<treated_nodes.size() << " " << n1<<endl;
-    cout<< untreated_nodes.size()<<" "<<n2<<endl;
+    //cout<< "compare"<<endl<<treated_nodes.size() << " " << n1<<endl;
+    //cout<< untreated_nodes.size()<<" "<<n2<<endl;
     return (1.0 * n1 / treated_nodes.size())  / (1.0 * n2 / untreated_nodes.size());
 
 }

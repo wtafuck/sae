@@ -1,15 +1,16 @@
 #include "argparse/macro-argparse-jquery.hh"
 #include "solver/solver.h"
 #include "sampling/triangle_sampling.h"
+#include "sampling/community_detection_sampling.h"
 #include "basic/triangle_count.h"
 #include "basic/pagerank.h"
 #include "basic/degree_distribution.h"
+#include "basic/community_detection.h"
 #include "storage/graph_builder.h"
 #include "storage/mgraph.h"
 #include "report/table_generator.h"
 #include "influence/influence_maximization.h"
 #include "basic/shortest_path.h"
-#include "basic/propensity_score_matching.h"
 #include <iostream>
 #include <fstream>
 #include <cstdio>
@@ -17,6 +18,8 @@
 #include <map>
 #include <cstdlib>
 #include "social_analysis/social_main.h"
+#include "basic/propensity_score_matching.h"
+
 
 using namespace std;
 using namespace sae::io;
@@ -30,15 +33,15 @@ DEF_ARGUMENT_CLASS(
     std::string,    para_edge_w,    "rand",     OPTIONAL,   OPT_SLH(-w, --weight, "edge weights:rand,const,deg\n"),
     double,         para_const, 0.0,            OPTIONAL,   OPT_SLH(-c, -constant, "constant value"),
     int,            para_start, "0",            OPTIONAL,   OPT_SLH(-s, --start, "start point"),
-    int,            para_end, "1",            OPTIONAL,   OPT_SLH(-e, --end, "end point")     
+    int,            para_end, "1",            OPTIONAL,   OPT_SLH(-e, --end, "end point")
 );
 
 string output_dir;
 
 void makeFakeData(int numVertex=10, double p = 0.1, int properties_num = 3) {
-	//int numEdge = rand() % (numVertex * numVertex / 3) + numVertex;
+    //int numEdge = rand() % (numVertex * numVertex / 3) + numVertex;
     int numEdge = (numVertex * (numVertex - 1)) / 2 * p;
-	GraphBuilder<int> graph;
+    GraphBuilder<int> graph;
     vector< vector<double> > all_properties(numVertex, std::vector<double>(properties_num));
     map<pair<int, int>, bool> edges;
     for (int i = 0; i < numEdge; ++i) {
@@ -50,7 +53,7 @@ void makeFakeData(int numVertex=10, double p = 0.1, int properties_num = 3) {
         } while (edges.find(edge) != edges.end());
         edges[edge] = true;
     }
-	for (int i = 0; i < numVertex; ++i) 
+    for (int i = 0; i < numVertex; ++i) 
     {
         for(int j = 1;j < properties_num; j++)
             all_properties[i][j] = (rand() % 100) / 100.0;
@@ -102,8 +105,46 @@ void makeFakeData(int numVertex=10, double p = 0.1, int properties_num = 3) {
             graph.AddEdge(edge.second, edge.first, value);
             //cout << edge.first << " " << edge.second << endl;
         }
-	system("mkdir -p fake");
-	graph.Save("./fake/graph");
+    system("mkdir -p fake");
+    graph.Save("./fake/graph");
+}
+
+
+
+map<string, int> nodeMap;
+
+int GetOrInsert(const string& key)
+{
+    map<string, int>::iterator it = nodeMap.find(key);
+    if (it != nodeMap.end())
+        return it -> second;
+    int id = (int) nodeMap.size();
+    nodeMap.insert(make_pair(key, id));
+    return id;
+}
+
+int makeData() {
+    GraphBuilder<int> graph;
+    ifstream fin("./resource/facebook.txt");
+    //ifstream fin("./resource/twitter_combined.txt");
+    string buf;
+    //for (int i = 0; i < 4; ++i) getline(fin, buf);
+    int v_cnt(-1);
+    map<string, int> nodeMap;
+    while (1) {
+        string x, y;
+        if (!(fin >> x >> y)) break;
+        int a = GetOrInsert(x);
+        int b = GetOrInsert(y);
+        int c = max(max(v_cnt, a), b);
+        if (c>800) continue;
+        while (v_cnt < c) graph.AddVertex(++v_cnt, 0);
+        graph.AddEdge(a, b, 0);
+        graph.AddEdge(b, a, 0);
+    }
+    cout << graph.VertexCount() << " " << graph.EdgeCount() << endl;
+    graph.Save("./data/facebook");
+    return 0;
 }
 
 void runPageRank(MappedGraph *graph) {
@@ -172,35 +213,54 @@ void runShortestPath(MappedGraph *graph, long long start, long long end, bool re
     time_t end_time = clock();
     cout << "Running time of Shortest_Path: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 }
-void runTest(MappedGraph *graph)
+
+void runCommunityDetection(MappedGraph *graph)
 {
+    cout<<"\tRun community detection algorithm"<<endl<<endl;
     time_t start_time = clock();
-    Propensity_Score_Matching psm(graph);
-    double ans = psm.solve(1);
-    double compare_ans = psm.compare(1);
-    cout<<"ans of psm is "<<ans<<endl;
-    cout<<"compare_ans is"<<compare_ans<<endl;
+    Community_detection cd(graph);
+    pair<vector<vid_t>,double> ans=cd.solve();
+    cout<<"\tbest community structure"<<endl<<endl;
+    for(unsigned int i=0;i<ans.first.size();i++)
+        cout<<"\t"<<ans.first[i];
+    cout<<endl<<endl<<"\tmodularity is "<<ans.second<<endl<<endl;
     time_t end_time = clock();
-    cout << "Running time of Propensity_Score_Matching: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
+    cout << "Running time of Community detection: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
+
+}
+
+void runCommunityDetectionSampling(MappedGraph *graph)
+{
+    cout<<"\tRun community detection sampling algorithm"<<endl<<endl;
+    time_t start_time = clock();
+    Community_detection_sampling cd(graph);
+    cd.solve();
+    time_t end_time = clock();
+    cout << "Running time of Community detection sampling: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 }
 
 int main(int argc, char **argv) {
-    int vertexNum = 2000;
-    double edgeProb = 0.005;
+    int vertexNum = 40;
+    double edgeProb = 0.2;
     srand(time(NULL));
-    //makeFakeData(vertexNum, edgeProb);return 0;
+    //makeFakeData(vertexNum, edgeProb);
+    //return 0;
 	// parse arguments
 	Argument args;
-	if (! args.parse_args(argc, argv)) 
+	if (! args.parse_args(argc, argv))
         return 1;
     // declare input file
     if (args.input().length() == 0)
         return 1;
-    
+
     string task = args.task();
     // generate a graph
     if (task == "gg") {
         makeFakeData(vertexNum, edgeProb);
+        cout << "generate success!" << endl;
+    }
+    if (task == "md") {
+        makeData();
         cout << "generate success!" << endl;
     }
     MappedGraph *graph = MappedGraph::Open(args.input().c_str());
@@ -209,12 +269,20 @@ int main(int argc, char **argv) {
     cout << "#edges: " << graph -> EdgeCount() << endl;
     cout << "=============================" << endl;
 
+    if (task =="cd"){
+	runCommunityDetection(graph);
+    }
+
+    if (task =="cs"){
+	runCommunityDetectionSampling(graph);
+    }
+
     // declare output file direction
     if (args.output().length() > 0) {
         output_dir = args.output().c_str();
     }
     system(("mkdir -p " + output_dir).c_str());
-        
+
     //declare task
 
     // call influence maximization
@@ -254,16 +322,16 @@ int main(int argc, char **argv) {
         runDegreeDistribution(graph);
     }
 	if (task == "sp") {
-        //runShortestPath(graph,args.para_start(),args.para_end(),true);
-        runTest(graph);
+        runShortestPath(graph,args.para_start(),args.para_end(),true);
     }
     if (task == "social")
         social_main(graph);
 
+
 	//testTable();
 	//makeFakeData(vertexNum, edgeProb);
 	//testTriangle();
-   
+
     return 0;
 }
 
