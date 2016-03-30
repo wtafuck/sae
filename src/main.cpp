@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include "social_analysis/social_main.h"
 #include "basic/propensity_score_matching.h"
+#include "basic/k_core_decomposition.h"
 
 
 using namespace std;
@@ -239,12 +240,22 @@ void runCommunityDetectionSampling(MappedGraph *graph)
     cout << "Running time of Community detection sampling: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 }
 
+void runKCoreDecomposition(MappedGraph *graph)
+{
+    cout<<"\tRun k-core decomposition algorithm"<<endl<<endl;
+    time_t start_time = clock();
+    K_Core_Decomposition cd(graph);
+    cd.solve();
+    time_t end_time = clock();
+    cout << "Running time of k-core decomposition: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
+}
+
 int main(int argc, char **argv) {
     int vertexNum = 40;
     double edgeProb = 0.2;
     srand(time(NULL));
-    //makeFakeData(vertexNum, edgeProb);
-    //return 0;
+//    makeFakeData(vertexNum, edgeProb);
+//    return 0;
 	// parse arguments
 	Argument args;
 	if (! args.parse_args(argc, argv))
@@ -276,6 +287,10 @@ int main(int argc, char **argv) {
     if (task =="cs"){
 	runCommunityDetectionSampling(graph);
     }
+	
+	if (task =="kc"){
+	runKCoreDecomposition(graph);
+	}
 
     // declare output file direction
     if (args.output().length() > 0) {
