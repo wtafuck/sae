@@ -245,7 +245,11 @@ void runKCoreDecomposition(MappedGraph *graph)
     cout<<"\tRun k-core decomposition algorithm"<<endl<<endl;
     time_t start_time = clock();
     K_Core_Decomposition cd(graph);
-    cd.solve();
+    vector<pair<vid_t, vid_t> > ans=cd.solve();
+    vid_t n=ans.size();
+    cout<<"No.  |  k-shell:"<<endl;
+    for (vid_t i=0;i<n;++i)
+    	cout<<ans[i].first<<' '<<ans[i].second<<endl;
     time_t end_time = clock();
     cout << "Running time of k-core decomposition: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 }
