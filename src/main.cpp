@@ -20,6 +20,7 @@
 #include "social_analysis/social_main.h"
 #include "basic/propensity_score_matching.h"
 #include "basic/k_core_decomposition.h"
+#include "streaming/dynamicMinimumSpanningTree.h"
 
 
 using namespace std;
@@ -254,6 +255,20 @@ void runKCoreDecomposition(MappedGraph *graph)
     cout << "Running time of k-core decomposition: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 }
 
+void runDynamicMinimumSpanningTree(MappedGraph *graph)
+{
+    cout<<"\tRun dynamic minimum spanning tree algorithm"<<endl<<endl;
+    time_t start_time = clock();
+    dynamicMinimumSpanningTree cd(graph);
+    vector<pair<pair<vid_t,vid_t>,int> > ans=cd.solve();
+    vid_t n=ans.size();
+    cout<<"<vetex1,vertex2>weight:"<<endl;
+    for (vid_t i=0;i<n;++i)
+    	cout<<'<'<<ans[i].first.first<<','<<ans[i].first.second<<'>'<<ans[i].second<<endl;
+    time_t end_time = clock();
+    cout << "Running time of dynamic minimum spanning tree: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
+}
+
 int main(int argc, char **argv) {
     int vertexNum = 40;
     double edgeProb = 0.2;
@@ -291,10 +306,6 @@ int main(int argc, char **argv) {
     if (task =="cs"){
 	runCommunityDetectionSampling(graph);
     }
-	
-	if (task =="kc"){
-	runKCoreDecomposition(graph);
-	}
 
     // declare output file direction
     if (args.output().length() > 0) {
@@ -345,6 +356,14 @@ int main(int argc, char **argv) {
     }
     if (task == "social")
         social_main(graph);
+        
+    if (task =="kc"){
+	runKCoreDecomposition(graph);
+	}
+	
+	if (task =="dm"){
+	runDynamicMinimumSpanningTree(graph);
+	}
 
 
 	//testTable();
