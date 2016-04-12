@@ -8,3 +8,4 @@ public:
     std::pair<std::vector<sae::io::vid_t>,double> solve();
 private:
 };
+//std::vector<std::pair<double, int> > compute_betweenness(sae::io::MappedGraph *graph,std::vector< bool> is_deleted);

@@ -51,7 +51,8 @@ vector<int> Social_Solver::Degree_Centrality()
         outdegrees.push_back(viter->OutEdgeCount());
     }
     sort(ids.begin(), ids.end(), [&outdegrees](int x,int y){ return outdegrees[x] > outdegrees[y]; });
-    return ids;
+    // return ids in social_main
+    return outdegrees;
 }
 
 std::vector<pair<double, int> > Social_Solver::Unweighted_Betweenness()
@@ -107,7 +108,7 @@ vector<double> Social_Solver::Effective_Size()
     {
         viter->MoveTo(i);
         ret.push_back(graph->VertexCount() 
-            - (double)(graph->EdgeCount() - viter->InEdgeCount() - viter->OutEdgeCount()) / graph->VertexCount());
+            - ((double)(graph->EdgeCount() - viter->InEdgeCount() - viter->OutEdgeCount())) / graph->VertexCount());
     }
     return ret;
 }
