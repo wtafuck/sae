@@ -259,7 +259,10 @@ void makeTencentData()
     GraphBuilder<int> graph;
     fin>>n>>m;
     for(int i = 0;i<n;i++)
+    {
         graph.AddVertex(i,0);
+        if(i % 1000 == 0) cerr<<i<<" / "<<n<<endl;
+    }
     cerr<<"finish vertices"<<endl;
     for(int i = 0;i<m;i++)
     {
@@ -270,7 +273,7 @@ void makeTencentData()
         }
         graph.AddEdge(x,y,0);
         graph.AddEdge(y,x,0);
-        if(i % 100000 == 0)
+        if(i % 10000 == 0)
             cerr<<i<<" / "<<m<<endl;
     }    
     graph.Save("./data/tencent_weibo");
