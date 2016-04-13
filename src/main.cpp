@@ -17,12 +17,13 @@
 #include <cstdio>
 #include <ctime>
 #include <map>
+#include <set>
 #include <cstdlib>
 #include "social_analysis/social_main.h"
 #include "basic/propensity_score_matching.h"
 #include "basic/k_core_decomposition.h"
 #include "streaming/dynamicMinimumSpanningTree.h"
-
+#include <cstring>
 
 using namespace std;
 using namespace sae::io;
@@ -285,6 +286,188 @@ void runKCoreDecomposition(MappedGraph *graph)
     time_t end_time = clock();
     cout << "Running time of k-core decomposition: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 }
+void makeTencentData()
+{
+    string file_name;
+    cin>> file_name;
+    ifstream fin(file_name.c_str());
+    int n,m;
+    GraphBuilder<int> graph;
+    fin>>n>>m;
+    for(int i = 0;i<n;i++)
+    {
+        graph.AddVertex(i,0);
+        if(i % 1000 == 0) cerr<<i<<" / "<<n<<endl;
+    }
+    cerr<<"finish vertices"<<endl;
+    for(int i = 0;i<m;i++)
+    {
+        int x,y,not_use;
+        if(!(fin >> x >> y >> not_use)) {
+            cerr<<"number of edges does not tally"<<endl;
+            break;
+        }
+        graph.AddEdge(x,y,0);
+        graph.AddEdge(y,x,0);
+        if(i % 10000 == 0)
+            cerr<<i<<" / "<<m<<endl;
+    }    
+    graph.Save("./data/tencent_weibo");
+
+}
+void makeExpertData()
+{
+    GraphBuilder<int> graph;
+    ifstream fin("./resource/expert.txt");
+    //ifstream fin("./resource/twitter_combined.txt");
+    string buf;
+    //for (int i = 0; i < 4; ++i) getline(fin, buf);
+    int v_sum = -1;
+    std::vector<int> v_cnt(100000,0);
+    set<pair<int, int> >edges;
+    while(1)
+    {
+        int num;
+        if(!(fin >> num)) break;
+        vector<int> points;
+        for(int i = 0; i<num;i++) {
+            int tmp = 0;
+            fin >> tmp;
+            points.push_back(tmp);
+            v_cnt[tmp]++;
+            while(v_sum < tmp) graph.AddVertex(++v_sum,0);
+            for(int j = 0; j<i; j++)
+                if(edges.find(make_pair(points[j],points[i])) == edges.end())
+                {
+                    graph.AddEdge(points[j],points[i],0);
+                    graph.AddEdge(points[i],points[j],0);
+                    edges.insert(make_pair(points[j],points[i]));
+                }
+        }
+        cerr<< "v_sum: "<<v_sum<<endl;
+        if(v_sum > 20000) break;
+    }
+    cout << graph.VertexCount() << " " << graph.EdgeCount() << endl;
+    graph.Save("./data/expert");
+    MappedGraph* mgraph = MappedGraph::Open("./data/expert");
+
+    vector< vector<double> > data;
+    
+    Social_Solver solver(mgraph);
+    vector<int> degrees = solver.Degree_Centrality();
+
+    vector<pair<double, int> >betweenness = solver.Unweighted_Betweenness();
+    vector<double> effective  = solver.Effective_Size();
+    std::vector<int> kcore = solver.K_Core();
+    for(int i = 0;i< mgraph->VertexCount();i++)
+    {
+        std::vector<double> property;
+        property.push_back(v_cnt[i]);
+        if(v_cnt[i] >= 3) cerr << i <<endl;
+        property.push_back(degrees[i]);
+       // property.push_back(effective[i]);
+        property.push_back(kcore[i]);
+        data.push_back(property);
+    }
+    for(int i = 0;i < betweenness.size(); i++)
+        data[betweenness[i].second].push_back(betweenness[i].first);
+    for(int i = 0; i< mgraph->VertexCount();i++)
+        graph.AddVertex(i, data[i]);
+    graph.Save("./data/expert");
+}
+void runPropensityScoreDifference(MappedGraph* graph)
+{
+    ifstream fin("./resource/dm-experts.txt");
+    int t;
+    vector<int> experts;
+    std::vector<bool> ground_truth(graph->VertexCount(), false);
+    while(fin >> t){
+        if(t <= graph->VertexCount())
+        {
+            ground_truth[t] = true;
+            experts.push_back(t);
+        }
+
+    }
+    std::vector< vector<double> > data, data2;
+    vector<bool> ground_truth2;
+    auto viter = graph->Vertices();
+    for(int i = 0;i<graph->VertexCount();i++)
+    {
+        viter->MoveTo(i);
+        data.push_back(sae::serialization::convert_from_string< vector<double> >(viter -> Data()) );
+        data[i].push_back(data[i][0]);
+    }
+    cout<< "accuracy plainful: "<< statistic::cross_validation_5_fold(data, ground_truth);
+
+    int set_number = 10, sample_number = 10;
+    std::vector< std::vector<double> > learner;
+    vector< std::vector<double> > parts_data;
+    std::vector<bool> parts_truth;
+    std::vector<bool> used(graph->VertexCount(), false);
+    for(int k = 0; k < set_number; k++)
+    {
+        cout<< "new sample"<<endl;
+        vector< std::vector<double> > part_data;
+        std::vector<bool> part_truth;
+        for(int i = 0;i<sample_number;i++)
+        {
+            int r1 = rand() % experts.size(), r2 = rand() % data.size();
+            part_data.push_back(data[experts[r1]]);
+            part_truth.push_back(ground_truth[experts[r1]]);
+            part_data.push_back(data[r2]);
+            part_truth.push_back(ground_truth[r2]);
+            if(!used[experts[r1]]){
+                used[experts[r1]] = true;
+                parts_data.push_back(data[experts[r1]]);
+                parts_truth.push_back(ground_truth[experts[r1]]);
+            }
+            if(!used[r2]){
+                used[r2] = true;
+                parts_data.push_back(data[r2]);
+                parts_truth.push_back(ground_truth[r2]);            
+            }
+        }
+        learner.push_back(statistic::logistic_regression(part_data,part_truth));
+        int tmp = 0;
+        for(int i = 0; i < part_truth.size(); i++)
+            tmp += (statistic::predict(learner[k], part_data[i])>0.5) == part_truth[i];
+        cerr<< "part accuracy: "<< tmp * 1.0/ part_truth.size() <<endl;
+     }
+    //data = parts_data;
+    //ground_truth = parts_truth;
+    vector<double> alpha = statistic::ada_boosting(parts_data, learner, parts_truth);
+    std::vector<bool> result(data.size());
+    for(int i = 0;i < data.size();i++){
+            double ans = 0;
+            for(int j = 0;j < learner.size();j++)
+                ans += alpha[j] * (statistic::predict(learner[j], data[i]) > 0.5 ? 1 : -1);
+            result[i] = ans < 0 ? false : true;
+    }
+    int tmp = 0, right1 = 0, right2  = 0, sum1 = 0, sum2 = 0;
+    for(int i = 0; i < ground_truth.size(); i++)
+    {
+        if(result[i] == ground_truth[i]){
+            tmp ++;
+            if(ground_truth[i]) right1++; else right2 ++;
+        }
+        if(ground_truth[i]) sum1 ++; else sum2 ++;
+    }
+
+    cout << "boosting accuracy: "<< tmp * 1.0 / ground_truth.size() <<endl;
+    cout << "accuracy in experts" << right1* 1.0 / sum1 <<endl;
+/*  Propensity_Score_Matching  psm(graph);
+    vector<int> nodes = psm.solve(3);
+    cerr << nodes.size() <<endl;
+    for(int i = 0;i< nodes.size();i++)
+    {
+        viter->MoveTo(nodes[i]);
+        data2.push_back(sae::serialization::convert_from_string< vector<double> >(viter -> Data()) );
+        ground_truth2.push_back(ground_truth[nodes[i]]);
+    }
+    cout<< "accuracy : "<< statistic::cross_validation_5_fold(data2, ground_truth2);   */
+
+}
 
 void runDynamicMinimumSpanningTree(string file_path)
 {
@@ -310,6 +493,9 @@ int main(int argc, char **argv) {
 //    makeFakeData(vertexNum, edgeProb);
 //	makeFakeDataForStreaming();
 //	makeDataForStreaming();
+//  makeFakeData(vertexNum, edgeProb);
+ // makeExpertData();
+//    makeTencentData();
 //    return 0;
 	// parse arguments
 	Argument args;
@@ -403,6 +589,9 @@ int main(int argc, char **argv) {
 	runKCoreDecomposition(graph);
 	}
 
+    if (task == "psm"){
+        runPropensityScoreDifference(graph);
+    }
 
 	//testTable();
 	//makeFakeData(vertexNum, edgeProb);
