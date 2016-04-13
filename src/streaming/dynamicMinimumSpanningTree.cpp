@@ -250,7 +250,7 @@ resultMST* dynamicMinimumSpanningTree::solve()
     }
     for (i=1;i<=m;++i)
     {
-    	scanf("%llu%llu%llu",&x,&y,&weight);
+    	scanf("%llu%llu%d",&x,&y,&weight);
     	++x;++y;
     	if (i%1000000==0) cout<<i<<endl;
         int temp=Insert(tree[x],tree[y],weight);
