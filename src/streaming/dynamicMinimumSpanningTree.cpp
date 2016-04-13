@@ -228,7 +228,7 @@ int dynamicMinimumSpanningTree::Insert(lctNode *x , lctNode *y , int weight)
 
 resultMST dynamicMinimumSpanningTree::solve()
 {
-	freopen((file_path+".txt").c_str(),"r",stdin);
+	freopen((file_path).c_str(),"r",stdin);
 	vid_t n,m;
 	scanf("%llu%llu",&n,&m);
 	cout<<n<<' '<<m<<endl;

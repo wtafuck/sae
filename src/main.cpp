@@ -481,9 +481,10 @@ void runDynamicMinimumSpanningTree(string file_path)
     fout<<"nodes:"<<ans.n<<",edges:"<<ans.m<<"\nmstValue:"<<ans.mstValue<<"\nvertex1 vertex2 weight:\n";
     for (i=0;i<n;++i)
         fout<<ans.edge[i].first.first<<' '<<ans.edge[i].first.second<<' '<<ans.edge[i].second<<endl;
-    fout.close();
     time_t end_time = clock();
     cout << "Running time of dynamic minimum spanning tree: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
+    fout << "Running time of dynamic minimum spanning tree: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
+    fout.close();
 }
 
 int main(int argc, char **argv) {
