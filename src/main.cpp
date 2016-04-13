@@ -480,7 +480,10 @@ void runDynamicMinimumSpanningTree(string file_path)
     ofstream fout("./output/dynamicMST.txt");
     fout<<"nodes:"<<ans.n<<",edges:"<<ans.m<<"\nmstValue:"<<ans.mstValue<<"\nvertex1 vertex2 weight:\n";
     for (i=0;i<n;++i)
+    {
+    	if (i%100000==0) cout<<i<<endl;
         fout<<ans.edge[i].first.first<<' '<<ans.edge[i].first.second<<' '<<ans.edge[i].second<<endl;
+    }
     time_t end_time = clock();
     cout << "Running time of dynamic minimum spanning tree: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
     fout << "Running time of dynamic minimum spanning tree: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
