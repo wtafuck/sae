@@ -31,7 +31,7 @@ class lctNode
     	bool revMark;
 };
 
-class dynamicMinimumSpanningTree:public sae::SolverForStreaming<resultMST>
+class dynamicMinimumSpanningTree:public sae::SolverForStreaming<resultMST*>
 {
 	public:
 		void Zig(lctNode*);
@@ -46,5 +46,5 @@ class dynamicMinimumSpanningTree:public sae::SolverForStreaming<resultMST>
 		int Insert(lctNode*,lctNode*,int);
 		dynamicMinimumSpanningTree(std::string file_path);
     	~dynamicMinimumSpanningTree();
-    	resultMST solve();  //return edge's two vertexs and its weight in MST
+    	resultMST* solve();  //return edge's two vertexs and its weight in MST
 };

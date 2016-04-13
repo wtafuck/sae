@@ -173,11 +173,11 @@ int makeDataForStreaming(){
 
 int makeFakeDataForStreaming(){
 	int n,m,i;
-	n=100000;m=10000000;
-	freopen("./fake/graph.txt","w",stdout);
-	printf("%d %d\n",n,m);
+	n=10000;m=1000000;
+	ofstream fout("./fake/graph.txt");
+	fout<<n<<' '<<m<<endl;
 	for (i=1;i<=m;++i)
-		printf("%d %d %d\n",rand()%n,rand()%n,rand()%1000+1);
+		fout<<rand()%n<<' '<<rand()%n<<' '<<rand()%1000+1<<endl;
     return 0;
 }
 
@@ -474,15 +474,15 @@ void runDynamicMinimumSpanningTree(string file_path)
     cout<<"\tRun dynamic minimum spanning tree algorithm"<<endl<<endl;
     time_t start_time = clock();
     dynamicMinimumSpanningTree cd(file_path);
-    resultMST ans=cd.solve();
-    vid_t n=ans.edge.size(),i;
+    resultMST*ans=cd.solve();
+    vid_t n=ans->edge.size(),i;
     cout<<"algorithm done. Writing results at './output/dynamicMST.txt' ..."<<endl;
     ofstream fout("./output/dynamicMST.txt");
-    fout<<"nodes:"<<ans.n<<",edges:"<<ans.m<<"\nmstValue:"<<ans.mstValue<<"\nvertex1 vertex2 weight:\n";
-    for (i=0;i<n;++i)
+    fout<<"nodes:"<<ans->n<<",edges:"<<ans->m<<"\nmstValue:"<<ans->mstValue<<"\nvertex1 vertex2 weight:\n";
+    for (i=0;i<n;++i) if (ans->edge[i].first.first!=-1)
     {
     	if (i%100000==0) cout<<i<<endl;
-        fout<<ans.edge[i].first.first<<' '<<ans.edge[i].first.second<<' '<<ans.edge[i].second<<endl;
+        fout<<ans->edge[i].first.first<<' '<<ans->edge[i].first.second<<' '<<ans->edge[i].second<<endl;
     }
     time_t end_time = clock();
     cout << "Running time of dynamic minimum spanning tree: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;

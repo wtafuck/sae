@@ -226,13 +226,14 @@ int dynamicMinimumSpanningTree::Insert(lctNode *x , lctNode *y , int weight)
     return ans;
 }*/
 
-resultMST dynamicMinimumSpanningTree::solve()
+resultMST* dynamicMinimumSpanningTree::solve()
 {
 	freopen((file_path).c_str(),"r",stdin);
 	vid_t n,m;
 	scanf("%llu%llu",&n,&m);
 	cout<<n<<' '<<m<<endl;
-	resultMST ans;tot=0;ans.n=n;ans.m=m;
+	resultMST*ans=new resultMST;
+	tot=0;ans->n=n;ans->m=m;
 	tree.clear();edges.clear();
 	null=new lctNode(0,-1,0,0);
     null->fa=null->ls=null->rs=null->node1=null->node2=null;
@@ -245,7 +246,7 @@ resultMST dynamicMinimumSpanningTree::solve()
     {
         tree.push_back(new lctNode(0,-1,null,null));
         edges.push_back(new lctNode(0,-1,null,null));
-        ans.edge.push_back(make_pair(make_pair(-1,-1),-1));
+        ans->edge.push_back(make_pair(make_pair(-1,-1),-1));
     }
     for (i=1;i<=m;++i)
     {
@@ -254,11 +255,8 @@ resultMST dynamicMinimumSpanningTree::solve()
     	if (i%1000000==0) cout<<i<<endl;
         int temp=Insert(tree[x],tree[y],weight);
         if (temp>0)
-        	ans.edge[temp]=make_pair(make_pair(x-1,y-1),weight);
+        	ans->edge[temp]=make_pair(make_pair(x-1,y-1),weight);
     }
-    for (i=0;i<ans.edge.size();++i)
-    	if (ans.edge[i].first.first==-1)
-    		ans.edge.erase(ans.edge.begin()+i),--i;
-    ans.mstValue=mstValue;
+    ans->mstValue=mstValue;
     return ans;
 }
