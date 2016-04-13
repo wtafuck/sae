@@ -1,8 +1,23 @@
-#include "storage/mgraph.h"
-#include "solver/solver.h"
+#include "solver/solverForStreaming.h"
 #include <vector>
+#include <string>
 
 typedef long long LL;
+typedef std::uint64_t vid_t;
+typedef std::uint64_t eid_t;
+
+class resultMST
+{
+	public:
+		LL mstValue;
+		vid_t n;
+		eid_t m;
+		std::vector<std::pair<std::pair<vid_t,vid_t>,int> > edge;
+		resultMST()
+		{
+			n=m=mstValue=0;edge.clear();
+		}
+};
 
 class lctNode
 {
@@ -16,7 +31,7 @@ class lctNode
     	bool revMark;
 };
 
-class dynamicMinimumSpanningTree:public sae::Solver<std::vector<std::pair<std::pair<sae::io::vid_t, sae::io::vid_t>,int> >>
+class dynamicMinimumSpanningTree:public sae::SolverForStreaming<resultMST>
 {
 	public:
 		void Zig(lctNode*);
@@ -29,7 +44,7 @@ class dynamicMinimumSpanningTree:public sae::Solver<std::vector<std::pair<std::p
 		void Cut(lctNode*,lctNode*);
 		int Query(lctNode*,lctNode*);
 		int Insert(lctNode*,lctNode*,int);
-		dynamicMinimumSpanningTree(sae::io::MappedGraph *graph);
+		dynamicMinimumSpanningTree(std::string file_path);
     	~dynamicMinimumSpanningTree();
-    	std::vector<std::pair<std::pair<sae::io::vid_t, sae::io::vid_t>,int> > solve();  //return edge's two vertexs and its weight in MST
+    	resultMST solve();  //return edge's two vertexs and its weight in MST
 };

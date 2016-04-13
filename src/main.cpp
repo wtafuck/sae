@@ -1,5 +1,6 @@
 #include "argparse/macro-argparse-jquery.hh"
 #include "solver/solver.h"
+#include "solver/solverForStreaming.h"
 #include "sampling/triangle_sampling.h"
 #include "sampling/community_detection_sampling.h"
 #include "basic/triangle_count.h"
@@ -149,6 +150,36 @@ int makeData() {
     return 0;
 }
 
+int makeDataForStreaming(){
+	ifstream fin("./resource/facebook.txt");
+    long long n=0,m=0,x,y;
+    while (fin >> x >> y)
+    {
+        ++m;
+        if (x>n) n=x;
+        if (y>n) n=y;
+    }
+    ++n;
+    ofstream fout("./data/facebook.txt");
+    fout<<n<<' '<<m<<endl;
+    ifstream fin2("./resource/facebook.txt");
+    while (fin2 >> x >> y)
+    {
+        ++m;fout<<x<<' '<<y<<' '<<rand()%1000+1<<endl;
+    }
+    return 0;
+}
+
+int makeFakeDataForStreaming(){
+	int n,m,i;
+	n=100000;m=10000000;
+	freopen("./fake/graph.txt","w",stdout);
+	printf("%d %d\n",n,m);
+	for (i=1;i<=m;++i)
+		printf("%d %d %d\n",rand()%n,rand()%n,rand()%1000+1);
+    return 0;
+}
+
 void runPageRank(MappedGraph *graph) {
     PageRank pr(graph);
     time_t start_time = clock();
@@ -255,16 +286,19 @@ void runKCoreDecomposition(MappedGraph *graph)
     cout << "Running time of k-core decomposition: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 }
 
-void runDynamicMinimumSpanningTree(MappedGraph *graph)
+void runDynamicMinimumSpanningTree(string file_path)
 {
     cout<<"\tRun dynamic minimum spanning tree algorithm"<<endl<<endl;
     time_t start_time = clock();
-    dynamicMinimumSpanningTree cd(graph);
-    vector<pair<pair<vid_t,vid_t>,int> > ans=cd.solve();
-    vid_t n=ans.size();
-    cout<<"<vetex1,vertex2>weight:"<<endl;
-    for (vid_t i=0;i<n;++i)
-    	cout<<'<'<<ans[i].first.first<<','<<ans[i].first.second<<'>'<<ans[i].second<<endl;
+    dynamicMinimumSpanningTree cd(file_path);
+    resultMST ans=cd.solve();
+    vid_t n=ans.edge.size(),i;
+    cout<<"algorithm done. Writing results at './output/dynamicMST.txt' ..."<<endl;
+    ofstream fout("./output/dynamicMST.txt");
+    fout<<"nodes:"<<ans.n<<",edges:"<<ans.m<<"\nmstValue:"<<ans.mstValue<<"\nvertex1 vertex2 weight:\n";
+    for (i=0;i<n;++i)
+        fout<<ans.edge[i].first.first<<' '<<ans.edge[i].first.second<<' '<<ans.edge[i].second<<endl;
+    fout.close();
     time_t end_time = clock();
     cout << "Running time of dynamic minimum spanning tree: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 }
@@ -274,6 +308,8 @@ int main(int argc, char **argv) {
     double edgeProb = 0.2;
     srand(time(NULL));
 //    makeFakeData(vertexNum, edgeProb);
+//	makeFakeDataForStreaming();
+//	makeDataForStreaming();
 //    return 0;
 	// parse arguments
 	Argument args;
@@ -293,6 +329,12 @@ int main(int argc, char **argv) {
         makeData();
         cout << "generate success!" << endl;
     }
+    
+    if (task =="dm"){
+	runDynamicMinimumSpanningTree(args.input());
+	return 0;
+	}
+	
     MappedGraph *graph = MappedGraph::Open(args.input().c_str());
     cout << "===== graph information =====" << endl;
     cout << "#vertices: " << graph -> VertexCount() << endl;
@@ -359,10 +401,6 @@ int main(int argc, char **argv) {
         
     if (task =="kc"){
 	runKCoreDecomposition(graph);
-	}
-	
-	if (task =="dm"){
-	runDynamicMinimumSpanningTree(graph);
 	}
 
 

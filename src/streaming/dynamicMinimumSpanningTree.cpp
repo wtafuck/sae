@@ -4,26 +4,24 @@
 #include <algorithm>
 #include <set>
 #include <utility>
+#include <fstream>
 #include "dynamicMinimumSpanningTree.h"
 
 #define INFI 2147483647
 
 using namespace std;
-using namespace sae::io;
 
 lctNode *null;
 int tot;
 LL mstValue;
 vector<lctNode*> tree,edges;
 
-dynamicMinimumSpanningTree::dynamicMinimumSpanningTree(MappedGraph *graph)
-    :Solver(graph)
-{
-}
+dynamicMinimumSpanningTree::dynamicMinimumSpanningTree(string file_path)
+:SolverForStreaming(file_path)
+{}
 
 dynamicMinimumSpanningTree::~dynamicMinimumSpanningTree()
-{
-}
+{}
 
 lctNode::lctNode(int edgeNum,int _weight,lctNode* _node1,lctNode* _node2)
 {
@@ -191,7 +189,7 @@ int dynamicMinimumSpanningTree::Insert(lctNode *x , lctNode *y , int weight)
     return temp;
 }
 
-vector<pair<pair<vid_t, vid_t>,int> > dynamicMinimumSpanningTree::solve()
+/*vector<pair<pair<vid_t, vid_t>,int> > dynamicMinimumSpanningTree::solve()
 {
 	vector<pair<pair<vid_t, vid_t>,int> > ans;
 	ans.clear();tot=0;
@@ -225,5 +223,42 @@ vector<pair<pair<vid_t, vid_t>,int> > dynamicMinimumSpanningTree::solve()
     	if (ans[i].first.first==-1)
     		ans.erase(ans.begin()+i),--i;
     cout << "mstValue:" << mstValue << endl;
+    return ans;
+}*/
+
+resultMST dynamicMinimumSpanningTree::solve()
+{
+	freopen((file_path+".txt").c_str(),"r",stdin);
+	vid_t n,m;
+	scanf("%llu%llu",&n,&m);
+	cout<<n<<' '<<m<<endl;
+	resultMST ans;tot=0;ans.n=n;ans.m=m;
+	tree.clear();edges.clear();
+	null=new lctNode(0,-1,0,0);
+    null->fa=null->ls=null->rs=null->node1=null->node2=null;
+    edges.push_back(null);
+    vid_t i,x,y;
+    int weight;
+    mstValue = 0;
+    tree.push_back(null);
+    for (i = 1; i <= n; ++ i)
+    {
+        tree.push_back(new lctNode(0,-1,null,null));
+        edges.push_back(new lctNode(0,-1,null,null));
+        ans.edge.push_back(make_pair(make_pair(-1,-1),-1));
+    }
+    for (i=1;i<=m;++i)
+    {
+    	scanf("%llu%llu%llu",&x,&y,&weight);
+    	++x;++y;
+    	if (i%1000000==0) cout<<i<<endl;
+        int temp=Insert(tree[x],tree[y],weight);
+        if (temp>0)
+        	ans.edge[temp]=make_pair(make_pair(x-1,y-1),weight);
+    }
+    for (i=0;i<ans.edge.size();++i)
+    	if (ans.edge[i].first.first==-1)
+    		ans.edge.erase(ans.edge.begin()+i),--i;
+    ans.mstValue=mstValue;
     return ans;
 }
