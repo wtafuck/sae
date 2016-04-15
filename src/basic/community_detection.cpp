@@ -127,7 +127,7 @@ pair<vector<vid_t>,int >  split_community(MappedGraph *graph,vector< bool> is_de
 }
 
 
-double  compute_modularity(MappedGraph *graph, vector<eid_t> community,int k)
+double  Community_detection::compute_modularity(MappedGraph *graph, vector<eid_t> community,int k)
 {
     int m = graph->EdgeCount();
     vector< vector<eid_t> > community_set(k);
@@ -156,16 +156,13 @@ double  compute_modularity(MappedGraph *graph, vector<eid_t> community,int k)
 }
 
 
-pair<vector<vid_t>,double>   run_Girvan_NewMan(MappedGraph *graph)
+pair<vector<vid_t>,double>   Community_detection::run_Girvan_NewMan(MappedGraph *graph,int K)
 {
     int m=graph->EdgeCount();
     int n= graph->VertexCount();
-    vector< vector<eid_t> > community(m);
+    vector< vid_t> community(n,1);
     vector< bool> is_deleted(m,false);
-    vector< eid_t> temp(n,1);
     vector<double> modularity(m,0);
-    for(int i=0;i<n;i++)
-        community[i]=temp;
     int k=1,j=0;
     for (;j<m;j++)
     {
@@ -180,20 +177,17 @@ pair<vector<vid_t>,double>   run_Girvan_NewMan(MappedGraph *graph)
             }
 
         if(edge_betweenness[0].first==0)  break;
-        if(j>0) community[j]=community[j-1];
         modularity[j]=modularity[j-1];
         pair<vector<vid_t>,int > split_com=split_community(graph,is_deleted);
-        community[j]=split_com.first;
+        community=split_com.first;
         k=split_com.second;
-        modularity[j]=compute_modularity(graph,community[j],k);
+        modularity[j]=compute_modularity(graph,community,k);
+        if(k>=K) break;
     }
-    int max_index=0;
-    for(int i=0;i<=j;i++)
-        if (modularity[i]>modularity[max_index]) max_index=i;
-    return make_pair(community[max_index],modularity[max_index]);
+    return make_pair(community,modularity[j]);
 }
 
-pair<vector<vid_t>,double>   run_label_propagation(MappedGraph *graph)
+pair<vector<vid_t>,double>   Community_detection::run_label_propagation(MappedGraph *graph)
 {
         cout<<"\tRun community detection algorithm with lable propagation"<<endl;
         srand(time(NULL));
@@ -272,10 +266,10 @@ pair<vector<vid_t>,double>   run_label_propagation(MappedGraph *graph)
 }
 
 
-pair<vector<vid_t>,double> Community_detection::solve()
+pair<vector<vid_t>,double> Community_detection::solve(int K)
 {
 
     //pair<vector<vid_t>,double> ans=run_label_propagation(graph);
-    pair<vector<vid_t>,double> ans=run_Girvan_NewMan(graph);
+    pair<vector<vid_t>,double> ans=run_Girvan_NewMan(graph,K);
     return ans;
 }

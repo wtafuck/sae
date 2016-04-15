@@ -57,7 +57,7 @@ void makeFakeData(int numVertex=10, double p = 0.1, int properties_num = 3) {
         } while (edges.find(edge) != edges.end());
         edges[edge] = true;
     }
-    for (int i = 0; i < numVertex; ++i) 
+    for (int i = 0; i < numVertex; ++i)
     {
         for(int j = 1;j < properties_num; j++)
             all_properties[i][j] = (rand() % 100) / 100.0;
@@ -69,7 +69,7 @@ void makeFakeData(int numVertex=10, double p = 0.1, int properties_num = 3) {
                     {
                         //balance properties of i,j
                         double & x = all_properties[i][1];
-                        double & y = all_properties[j][1]; 
+                        double & y = all_properties[j][1];
                         double xx = x, yy = y;
                         double alpha = 0.4;
                         x = alpha * xx + (1 - alpha) * yy;
@@ -129,7 +129,7 @@ int GetOrInsert(const string& key)
 
 int makeData() {
     GraphBuilder<int> graph;
-    ifstream fin("./resource/facebook.txt");
+    ifstream fin("./resource/football.txt");
     //ifstream fin("./resource/twitter_combined.txt");
     string buf;
     //for (int i = 0; i < 4; ++i) getline(fin, buf);
@@ -147,7 +147,7 @@ int makeData() {
         graph.AddEdge(b, a, 0);
     }
     cout << graph.VertexCount() << " " << graph.EdgeCount() << endl;
-    graph.Save("./data/facebook");
+    graph.Save("./data/football");
     return 0;
 }
 
@@ -248,29 +248,55 @@ void runShortestPath(MappedGraph *graph, long long start, long long end, bool re
     cout << "Running time of Shortest_Path: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 }
 
-void runCommunityDetection(MappedGraph *graph)
+void runCommunityDetection(MappedGraph *graph,string input)
 {
     cout<<"\tRun community detection algorithm"<<endl<<endl;
     time_t start_time = clock();
     Community_detection cd(graph);
-    pair<vector<vid_t>,double> ans=cd.solve();
-    cout<<"\tbest community structure"<<endl<<endl;
-    for(unsigned int i=0;i<ans.first.size();i++)
-        cout<<"\t"<<ans.first[i];
-    cout<<endl<<endl<<"\tmodularity is "<<ans.second<<endl<<endl;
+    pair<vector<vid_t>,double> ans=cd.solve(10);
+	string myinput =input.substr(7);
+	FILE* fout = fopen((  "output/community_detection/"+myinput).c_str(), "w");
+	fprintf(fout, "modularity is %.4f\nvertex_id\tcommunity_id\n",ans.second);
+	for(unsigned int i=0;i<ans.first.size();i++)
+        fprintf(fout, "%d\t%d\n",i,ans.first[i]);
     time_t end_time = clock();
-    cout << "Running time of Community detection: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
-
+	fprintf(fout, "\tRunning time of Community detection: %.2f",(end_time - start_time + 0.0) / CLOCKS_PER_SEC );
+	fclose(fout);
 }
 
-void runCommunityDetectionSampling(MappedGraph *graph)
+void runCommunityDetectionSampling(MappedGraph *graph,string input)
 {
     cout<<"\tRun community detection sampling algorithm"<<endl<<endl;
+	string myinput =input.substr(7);
+	FILE* fout = fopen((  "output/community_detection_sampling/"+myinput).c_str(), "w");
     time_t start_time = clock();
+	int K=10;
+	double p=0.5;
     Community_detection_sampling cd(graph);
-    cd.solve();
+    pair<vector<vid_t>,double> ans=cd.solve(p,K);
+	fprintf(fout, "modularity is %.4f\nvertex_id\tcommunity_id\n",ans.second);
+	for(unsigned int i=0;i<ans.first.size();i++)
+        fprintf(fout, "%d\t%d\n",i,ans.first[i]);
     time_t end_time = clock();
-    cout << "Running time of Community detection sampling: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
+	cout<< "\tRunning time of Community detection: "<<((end_time - start_time + 0.0) / CLOCKS_PER_SEC )<<endl;;
+	fclose(fout);
+}
+
+void runCommunityDetectionSamplingTencent(MappedGraph *graph,string input)
+{
+    cout<<"\tRun community detection sampling algorithm"<<endl<<endl;
+	FILE* fout = fopen(  "output/community_detection_sampling/tencent_weibo", "w");
+    time_t start_time = clock();
+	int K=10;
+	double p=0.0003;
+    Community_detection_sampling cd(graph);
+    pair<vector<vid_t>,double> ans=cd.solve(p,K);
+	fprintf(fout, "modularity is %.4f\nvertex_id\tcommunity_id\n",ans.second);
+	for(unsigned int i=0;i<ans.first.size();i++)
+        fprintf(fout, "%d\t%d\n",i,ans.first[i]);
+    time_t end_time = clock();
+	cout<< "\tRunning time of Community detection: "<<((end_time - start_time + 0.0) / CLOCKS_PER_SEC )<<endl;;
+	fclose(fout);
 }
 
 void runKCoreDecomposition(MappedGraph *graph)
@@ -311,7 +337,7 @@ void makeTencentData()
         graph.AddEdge(y,x,0);
         if(i % 10000 == 0)
             cerr<<i<<" / "<<m<<endl;
-    }    
+    }
     graph.Save("./data/tencent_weibo");
 
 }
@@ -352,7 +378,7 @@ void makeExpertData()
     MappedGraph* mgraph = MappedGraph::Open("./data/expert");
 
     vector< vector<double> > data;
-    
+
     Social_Solver solver(mgraph);
     vector<int> degrees = solver.Degree_Centrality();
 
@@ -425,7 +451,7 @@ void runPropensityScoreDifference(MappedGraph* graph)
             if(!used[r2]){
                 used[r2] = true;
                 parts_data.push_back(data[r2]);
-                parts_truth.push_back(ground_truth[r2]);            
+                parts_truth.push_back(ground_truth[r2]);
             }
         }
         learner.push_back(statistic::logistic_regression(part_data,part_truth));
@@ -510,6 +536,7 @@ int main(int argc, char **argv) {
         return 1;
 
     string task = args.task();
+    string input=args.input();
     // generate a graph
     if (task == "gg") {
         makeFakeData(vertexNum, edgeProb);
@@ -519,12 +546,12 @@ int main(int argc, char **argv) {
         makeData();
         cout << "generate success!" << endl;
     }
-    
+
     if (task =="dm"){
 	runDynamicMinimumSpanningTree(args.input());
 	return 0;
 	}
-	
+
     MappedGraph *graph = MappedGraph::Open(args.input().c_str());
     cout << "===== graph information =====" << endl;
     cout << "#vertices: " << graph -> VertexCount() << endl;
@@ -532,11 +559,15 @@ int main(int argc, char **argv) {
     cout << "=============================" << endl;
 
     if (task =="cd"){
-	runCommunityDetection(graph);
+	runCommunityDetection(graph,input);
     }
 
     if (task =="cs"){
-	runCommunityDetectionSampling(graph);
+	runCommunityDetectionSampling(graph,input);
+    }
+
+	if (task =="ct"){
+	runCommunityDetectionSamplingTencent(graph,input);
     }
 
     // declare output file direction
@@ -588,7 +619,7 @@ int main(int argc, char **argv) {
     }
     if (task == "social")
         social_main(graph);
-        
+
     if (task =="kc"){
 	runKCoreDecomposition(graph);
 	}
