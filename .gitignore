@@ -1,3 +1,4 @@
+.gitignore
 *.DS_Store
 *.swp
 /obj/*
@@ -6,3 +7,5 @@
 /output/*
 *~
 /data/*
+sae.cbp
+sae.layout
