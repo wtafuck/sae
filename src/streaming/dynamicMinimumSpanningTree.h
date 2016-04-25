@@ -9,10 +9,10 @@ typedef std::uint64_t eid_t;
 class resultMST
 {
 	public:
-		LL mstValue;
+		double mstValue;
 		vid_t n;
 		eid_t m;
-		std::vector<std::pair<std::pair<vid_t,vid_t>,int> > edge;
+		std::vector<std::pair<std::pair<vid_t,vid_t>,double> > edge;
 		resultMST()
 		{
 			n=m=mstValue=0;edge.clear();
@@ -22,12 +22,13 @@ class resultMST
 class lctNode
 {
 	public:
-    	lctNode(int,int,lctNode*,lctNode*);
+    	lctNode(int,double,lctNode*,lctNode*);
     	void Reverse();
     	void PushUp();
     	void PushDown();
     	lctNode *fa,*ls,*rs,*node1,*node2;
-    	int num, maxEdge,weight;
+    	int num, maxEdge;
+	double weight;
     	bool revMark;
 };
 
@@ -43,7 +44,7 @@ class dynamicMinimumSpanningTree:public sae::SolverForStreaming<resultMST*>
 		void Link(lctNode*,lctNode*);
 		void Cut(lctNode*,lctNode*);
 		int Query(lctNode*,lctNode*);
-		int Insert(lctNode*,lctNode*,int);
+		int Insert(lctNode*,lctNode*,double);
 		dynamicMinimumSpanningTree(std::string file_path);
     	~dynamicMinimumSpanningTree();
     	resultMST* solve();  //return edge's two vertexs and its weight in MST

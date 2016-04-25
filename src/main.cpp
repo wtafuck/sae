@@ -315,6 +315,23 @@ void makeTencentData()
     graph.Save("./data/tencent_weibo");
 
 }
+
+void makeTencentDataForStreaming()
+{
+    ifstream fin("/tmp/tencent8.graph");
+    ofstream fout("./output/tencent8AddRandomWeight.graph");
+    int n,m,i,x,y,w;
+    fin>>n>>m;
+    fout<<n<<' '<<m<<endl;
+    for (i=1;i<=m;++i)
+    {
+	if (i%1000000==0) cout<<i<<endl;
+        fin>>x>>y>>w;
+        fout<<x<<' '<<y<<' '<<rand()%65536*1.0/65536<<endl;
+    }
+    fin.close();fout.close();
+}
+
 void makeExpertData()
 {
     GraphBuilder<int> graph;
@@ -478,14 +495,15 @@ void runDynamicMinimumSpanningTree(string file_path)
     vid_t n=ans->edge.size(),i;
     cout<<"algorithm done. Writing results at './output/dynamicMST.txt' ..."<<endl;
     ofstream fout("./output/dynamicMST.txt");
+    time_t end_time = clock();
+    fout<<"Running time of dynamic MST algorithm: " << (end_time-start_time+0.0)/ CLOCKS_PER_SEC <<'s'<<endl;
     fout<<"nodes:"<<ans->n<<",edges:"<<ans->m<<"\nmstValue:"<<ans->mstValue<<"\nvertex1 vertex2 weight:\n";
     for (i=0;i<n;++i) if (ans->edge[i].first.first!=-1)
     {
     	if (i%100000==0) cout<<i<<endl;
         fout<<ans->edge[i].first.first<<' '<<ans->edge[i].first.second<<' '<<ans->edge[i].second<<endl;
     }
-    time_t end_time = clock();
-    cout << "Running time of dynamic minimum spanning tree: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
+    end_time = clock();
     fout << "Running time of dynamic minimum spanning tree: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
     fout.close();
 }
@@ -496,6 +514,7 @@ int main(int argc, char **argv) {
     srand(time(NULL));
 //    makeFakeData(vertexNum, edgeProb);
 //	makeFakeDataForStreaming();
+//	makeTencentDataForStreaming();
 //	makeDataForStreaming();
 //  makeFakeData(vertexNum, edgeProb);
  // makeExpertData();
