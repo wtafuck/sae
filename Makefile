@@ -29,7 +29,7 @@ CXXFLAGS += #-m64
 
 LDFLAGS =
 
-CXX = g++
+CXX ?= g++
 CC = gcc
 
 CXXSOURCES = $(shell find -L src -name "*.cpp" -o -name '*.c')

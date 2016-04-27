@@ -77,10 +77,13 @@ To run community detection sampling method with community number as 5 and sample
 ./bin/sae -i ./data/facebook -t cs -k 5 -p 0.01
 ##### Example for Propensity Score Matching
 ./bin/sae -i ./data/expert -t psm
+
 3
 ##### Example for Expert classfication
 ./bin/sae -i ./data/expert -t ec
+
 ./resource/dm-experts.txt
 #### Basic Social Analysis Tools
 ./bin/sae -i ./data/fake -t social
+
 then you can choose tasks listed on the screen.
