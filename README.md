@@ -37,3 +37,15 @@ The input file is placed at ./data/facebook
 To run influence maximization with constant edge weight as 0.5 and number of seed users as 10:
 
 ./bin/sae –i ./data/facebook –t im –k 10 –w const –c 0.5
+
+#### Example for dynamicMST
+The input file is placed at ./data.txt
+
+data.txt contains vertex number n, edge number m and all the edges of the graph:
+n m
+x1 y1 w1
+x2 y2 w2
+...
+
+./bin/sae –i ./data.txt –t dm
+
