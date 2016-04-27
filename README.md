@@ -29,7 +29,19 @@ pr: run PageRank;
 
 dd: demonstrate the degree distribution;
 
-tr: count the number of triangles.
+tr: count the number of triangles;
+
+cd: community detection:
+
+[-k INT:K]: the number of community;
+
+[-r INT:run]: choose a algorithm for community detection;
+
+cs: community detection with sampling:
+
+[-k INT:K]: the number of community;
+
+[-p FLOAT:probability]: sample probability for community detection.
 
 #### Example
 The input file is placed at ./data/facebook
@@ -37,3 +49,11 @@ The input file is placed at ./data/facebook
 To run influence maximization with constant edge weight as 0.5 and number of seed users as 10:
 
 ./bin/sae –i ./data/facebook –t im –k 10 –w const –c 0.5
+
+To run community detection with community number as 5 and aglorithm 2:
+
+./bin/sae -i ./data/facebook -t cd -k 5 -r 2
+
+To run community detection sampling method with community number as 5 and sample probability as 0.01:
+
+./bin/sae -i ./data/facebook -t cs -k 5 -p 0.01

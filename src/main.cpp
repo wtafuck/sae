@@ -37,7 +37,9 @@ DEF_ARGUMENT_CLASS(
     std::string,    para_edge_w,    "rand",     OPTIONAL,   OPT_SLH(-w, --weight, "edge weights:rand,const,deg\n"),
     double,         para_const, 0.0,            OPTIONAL,   OPT_SLH(-c, -constant, "constant value"),
     int,            para_start, "0",            OPTIONAL,   OPT_SLH(-s, --start, "start point"),
-    int,            para_end, "1",            OPTIONAL,   OPT_SLH(-e, --end, "end point")
+    int,            para_end, "1",            OPTIONAL,   OPT_SLH(-e, --end, "end point"),
+    int,            para_cd_task, 4,            OPTIONAL,   OPT_SLH(-r, --run, "run community detection sub task"),
+    double,            para_sample_probability, 0.01,            OPTIONAL,   OPT_SLH(-p, --probability, "sample probability for aglorithm")
 );
 
 string output_dir;
@@ -129,7 +131,7 @@ int GetOrInsert(const string& key)
 
 int makeData() {
     GraphBuilder<int> graph;
-    ifstream fin("./resource/football.txt");
+    ifstream fin("./resource/Slashdot-2.txt");
     //ifstream fin("./resource/twitter_combined.txt");
     string buf;
     //for (int i = 0; i < 4; ++i) getline(fin, buf);
@@ -141,13 +143,12 @@ int makeData() {
         int a = GetOrInsert(x);
         int b = GetOrInsert(y);
         int c = max(max(v_cnt, a), b);
-        if (c>800) continue;
         while (v_cnt < c) graph.AddVertex(++v_cnt, 0);
         graph.AddEdge(a, b, 0);
         graph.AddEdge(b, a, 0);
     }
     cout << graph.VertexCount() << " " << graph.EdgeCount() << endl;
-    graph.Save("./data/football");
+    graph.Save("./data/Slashdot-2");
     return 0;
 }
 
@@ -248,47 +249,52 @@ void runShortestPath(MappedGraph *graph, long long start, long long end, bool re
     cout << "Running time of Shortest_Path: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 }
 
-void runCommunityDetection(MappedGraph *graph,string input)
+void runCommunityDetection(MappedGraph *graph,string input,int sub_task,int K)
 {
     cout<<"\tRun community detection algorithm"<<endl<<endl;
     time_t start_time = clock();
     Community_detection cd(graph);
-    pair<vector<vid_t>,double> ans=cd.solve(10);
-	string myinput =input.substr(7);
-	FILE* fout = fopen((  "output/community_detection/"+myinput).c_str(), "w");
+    pair<vector<vid_t>,double> ans=cd.solve(K,sub_task);
+    time_t end_time = clock();
+
+    printf( "\tmodularity is %.4f\n",ans.second);
+    printf( "\tRunning time of Community detection: %.4f\n",(end_time - start_time + 0.0) / CLOCKS_PER_SEC );
+
+	int i=input.size();
+	for(;i>=0;i--) if(input[i]=='/') break;
+	string filename=input.substr(i+1);
+	FILE* fout = fopen((  "output/community_detection/"+filename).c_str(), "w");
+	fprintf(fout, "Running time of Community detection: %.4f\n",(end_time - start_time + 0.0) / CLOCKS_PER_SEC );
 	fprintf(fout, "modularity is %.4f\nvertex_id\tcommunity_id\n",ans.second);
 	for(unsigned int i=0;i<ans.first.size();i++)
         fprintf(fout, "%d\t%d\n",i,ans.first[i]);
-    time_t end_time = clock();
-	fprintf(fout, "\tRunning time of Community detection: %.2f",(end_time - start_time + 0.0) / CLOCKS_PER_SEC );
 	fclose(fout);
 }
 
-void runCommunityDetectionSampling(MappedGraph *graph,string input)
+void runCommunityDetectionSampling(MappedGraph *graph,string input,double p,int K)
 {
     cout<<"\tRun community detection sampling algorithm"<<endl<<endl;
-	string myinput =input.substr(7);
-	FILE* fout = fopen((  "output/community_detection_sampling/"+myinput).c_str(), "w");
+    int i=input.size();
+	for(;i>=0;i--) if(input[i]=='/') break;
+	string filename=input.substr(i+1);
+	FILE* fout = fopen((  "output/community_detection_sampling/"+filename).c_str(), "w");
     time_t start_time = clock();
-	int K=10;
-	double p=0.5;
     Community_detection_sampling cd(graph);
     pair<vector<vid_t>,double> ans=cd.solve(p,K);
 	fprintf(fout, "modularity is %.4f\nvertex_id\tcommunity_id\n",ans.second);
 	for(unsigned int i=0;i<ans.first.size();i++)
         fprintf(fout, "%d\t%d\n",i,ans.first[i]);
     time_t end_time = clock();
-	cout<< "\tRunning time of Community detection: "<<((end_time - start_time + 0.0) / CLOCKS_PER_SEC )<<endl;;
+    printf( "\tmodularity is %.4f\n",ans.second);
+	cout<< "\tRunning time of Community detection: "<<((end_time - start_time + 0.0) / CLOCKS_PER_SEC )<<endl;
 	fclose(fout);
 }
 
-void runCommunityDetectionSamplingTencent(MappedGraph *graph,string input)
+void runCommunityDetectionSamplingTencent(MappedGraph *graph,string input,double p,int K)
 {
     cout<<"\tRun community detection sampling algorithm"<<endl<<endl;
 	FILE* fout = fopen(  "output/community_detection_sampling/tencent_weibo", "w");
     time_t start_time = clock();
-	int K=10;
-	double p=0.0003;
     Community_detection_sampling cd(graph);
     pair<vector<vid_t>,double> ans=cd.solve(p,K);
 	fprintf(fout, "modularity is %.4f\nvertex_id\tcommunity_id\n",ans.second);
@@ -537,6 +543,9 @@ int main(int argc, char **argv) {
 
     string task = args.task();
     string input=args.input();
+    double p=args.para_sample_probability();
+    int sub_task=args.para_cd_task();
+    int K =args.para_im_k();
     // generate a graph
     if (task == "gg") {
         makeFakeData(vertexNum, edgeProb);
@@ -559,15 +568,15 @@ int main(int argc, char **argv) {
     cout << "=============================" << endl;
 
     if (task =="cd"){
-	runCommunityDetection(graph,input);
+	runCommunityDetection(graph,input,sub_task,K);
     }
 
     if (task =="cs"){
-	runCommunityDetectionSampling(graph,input);
+	runCommunityDetectionSampling(graph,input,p,K);
     }
 
 	if (task =="ct"){
-	runCommunityDetectionSamplingTencent(graph,input);
+	runCommunityDetectionSamplingTencent(graph,input,p,K);
     }
 
     // declare output file direction
