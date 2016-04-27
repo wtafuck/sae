@@ -5,6 +5,8 @@
 #include <set>
 #include <utility>
 #include <fstream>
+#include <ctime>
+#include <cstdlib>
 #include "dynamicMinimumSpanningTree.h"
 
 #define INFI 2147483647
@@ -13,7 +15,7 @@ using namespace std;
 
 lctNode *null;
 int tot;
-LL mstValue;
+double mstValue;
 vector<lctNode*> tree,edges;
 
 dynamicMinimumSpanningTree::dynamicMinimumSpanningTree(string file_path)
@@ -23,7 +25,7 @@ dynamicMinimumSpanningTree::dynamicMinimumSpanningTree(string file_path)
 dynamicMinimumSpanningTree::~dynamicMinimumSpanningTree()
 {}
 
-lctNode::lctNode(int edgeNum,int _weight,lctNode* _node1,lctNode* _node2)
+lctNode::lctNode(int edgeNum,double _weight,lctNode* _node1,lctNode* _node2)
 {
 	weight=_weight;
     fa = ls = rs = null;
@@ -168,7 +170,7 @@ int dynamicMinimumSpanningTree::Query(lctNode *x , lctNode *y)
     return y->maxEdge;
 }
 
-int dynamicMinimumSpanningTree::Insert(lctNode *x , lctNode *y , int weight)
+int dynamicMinimumSpanningTree::Insert(lctNode *x , lctNode *y , double weight)
 {
 	int temp=-1;
 	if (x == y)
@@ -228,18 +230,19 @@ int dynamicMinimumSpanningTree::Insert(lctNode *x , lctNode *y , int weight)
 
 resultMST* dynamicMinimumSpanningTree::solve()
 {
-	freopen((file_path).c_str(),"r",stdin);
-	vid_t n,m;
-	scanf("%llu%llu",&n,&m);
-	cout<<n<<' '<<m<<endl;
-	resultMST*ans=new resultMST;
-	tot=0;ans->n=n;ans->m=m;
-	tree.clear();edges.clear();
-	null=new lctNode(0,-1,0,0);
+    srand(time(0));
+    freopen((file_path).c_str(),"r",stdin);
+    vid_t n,m;
+    scanf("%llu%llu",&n,&m);
+    cout<<n<<' '<<m<<endl;
+    resultMST*ans=new resultMST;
+    tot=0;ans->n=n;ans->m=m;
+    tree.clear();edges.clear();
+    null=new lctNode(0,-1,0,0);
     null->fa=null->ls=null->rs=null->node1=null->node2=null;
     edges.push_back(null);
     vid_t i,x,y;
-    int weight;
+    double weight;
     mstValue = 0;
     tree.push_back(null);
     for (i = 1; i <= n; ++ i)
@@ -250,7 +253,7 @@ resultMST* dynamicMinimumSpanningTree::solve()
     }
     for (i=1;i<=m;++i)
     {
-    	scanf("%llu%llu%d",&x,&y,&weight);
+    	scanf("%llu%llu%lf",&x,&y,&weight);
     	++x;++y;
     	if (i%1000000==0) cout<<i<<endl;
         int temp=Insert(tree[x],tree[y],weight);
