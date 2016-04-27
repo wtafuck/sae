@@ -1,5 +1,6 @@
 #include "argparse/macro-argparse-jquery.hh"
 #include "solver/solver.h"
+#include "solver/solverForStreaming.h"
 #include "sampling/triangle_sampling.h"
 #include "sampling/community_detection_sampling.h"
 #include "basic/triangle_count.h"
@@ -21,6 +22,7 @@
 #include "social_analysis/social_main.h"
 #include "basic/propensity_score_matching.h"
 #include "basic/k_core_decomposition.h"
+#include "streaming/dynamicMinimumSpanningTree.h"
 #include <cstring>
 
 using namespace std;
@@ -35,7 +37,9 @@ DEF_ARGUMENT_CLASS(
     std::string,    para_edge_w,    "rand",     OPTIONAL,   OPT_SLH(-w, --weight, "edge weights:rand,const,deg\n"),
     double,         para_const, 0.0,            OPTIONAL,   OPT_SLH(-c, -constant, "constant value"),
     int,            para_start, "0",            OPTIONAL,   OPT_SLH(-s, --start, "start point"),
-    int,            para_end, "1",            OPTIONAL,   OPT_SLH(-e, --end, "end point")
+    int,            para_end, "1",            OPTIONAL,   OPT_SLH(-e, --end, "end point"),
+    int,            para_cd_task, 4,            OPTIONAL,   OPT_SLH(-r, --run, "run community detection sub task"),
+    double,            para_sample_probability, 0.01,            OPTIONAL,   OPT_SLH(-p, --probability, "sample probability for aglorithm")
 );
 
 string output_dir;
@@ -55,7 +59,7 @@ void makeFakeData(int numVertex=10, double p = 0.1, int properties_num = 3) {
         } while (edges.find(edge) != edges.end());
         edges[edge] = true;
     }
-    for (int i = 0; i < numVertex; ++i) 
+    for (int i = 0; i < numVertex; ++i)
     {
         for(int j = 1;j < properties_num; j++)
             all_properties[i][j] = (rand() % 100) / 100.0;
@@ -67,7 +71,7 @@ void makeFakeData(int numVertex=10, double p = 0.1, int properties_num = 3) {
                     {
                         //balance properties of i,j
                         double & x = all_properties[i][1];
-                        double & y = all_properties[j][1]; 
+                        double & y = all_properties[j][1];
                         double xx = x, yy = y;
                         double alpha = 0.4;
                         x = alpha * xx + (1 - alpha) * yy;
@@ -127,7 +131,7 @@ int GetOrInsert(const string& key)
 
 int makeData() {
     GraphBuilder<int> graph;
-    ifstream fin("./resource/facebook.txt");
+    ifstream fin("./resource/Slashdot-2.txt");
     //ifstream fin("./resource/twitter_combined.txt");
     string buf;
     //for (int i = 0; i < 4; ++i) getline(fin, buf);
@@ -139,13 +143,42 @@ int makeData() {
         int a = GetOrInsert(x);
         int b = GetOrInsert(y);
         int c = max(max(v_cnt, a), b);
-        if (c>800) continue;
         while (v_cnt < c) graph.AddVertex(++v_cnt, 0);
         graph.AddEdge(a, b, 0);
         graph.AddEdge(b, a, 0);
     }
     cout << graph.VertexCount() << " " << graph.EdgeCount() << endl;
-    graph.Save("./data/facebook");
+    graph.Save("./data/Slashdot-2");
+    return 0;
+}
+
+int makeDataForStreaming(){
+	ifstream fin("./resource/facebook.txt");
+    long long n=0,m=0,x,y;
+    while (fin >> x >> y)
+    {
+        ++m;
+        if (x>n) n=x;
+        if (y>n) n=y;
+    }
+    ++n;
+    ofstream fout("./data/facebook.txt");
+    fout<<n<<' '<<m<<endl;
+    ifstream fin2("./resource/facebook.txt");
+    while (fin2 >> x >> y)
+    {
+        ++m;fout<<x<<' '<<y<<' '<<rand()%1000+1<<endl;
+    }
+    return 0;
+}
+
+int makeFakeDataForStreaming(){
+	int n,m,i;
+	n=10000;m=1000000;
+	ofstream fout("./fake/graph.txt");
+	fout<<n<<' '<<m<<endl;
+	for (i=1;i<=m;++i)
+		fout<<rand()%n<<' '<<rand()%n<<' '<<rand()%1000+1<<endl;
     return 0;
 }
 
@@ -216,29 +249,60 @@ void runShortestPath(MappedGraph *graph, long long start, long long end, bool re
     cout << "Running time of Shortest_Path: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 }
 
-void runCommunityDetection(MappedGraph *graph)
+void runCommunityDetection(MappedGraph *graph,string input,int sub_task,int K)
 {
     cout<<"\tRun community detection algorithm"<<endl<<endl;
     time_t start_time = clock();
     Community_detection cd(graph);
-    pair<vector<vid_t>,double> ans=cd.solve();
-    cout<<"\tbest community structure"<<endl<<endl;
-    for(unsigned int i=0;i<ans.first.size();i++)
-        cout<<"\t"<<ans.first[i];
-    cout<<endl<<endl<<"\tmodularity is "<<ans.second<<endl<<endl;
+    pair<vector<vid_t>,double> ans=cd.solve(K,sub_task);
     time_t end_time = clock();
-    cout << "Running time of Community detection: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 
+    printf( "\tmodularity is %.4f\n",ans.second);
+    printf( "\tRunning time of Community detection: %.4f\n",(end_time - start_time + 0.0) / CLOCKS_PER_SEC );
+
+	int i=input.size();
+	for(;i>=0;i--) if(input[i]=='/') break;
+	string filename=input.substr(i+1);
+	FILE* fout = fopen((  "output/community_detection/"+filename).c_str(), "w");
+	fprintf(fout, "Running time of Community detection: %.4f\n",(end_time - start_time + 0.0) / CLOCKS_PER_SEC );
+	fprintf(fout, "modularity is %.4f\nvertex_id\tcommunity_id\n",ans.second);
+	for(unsigned int i=0;i<ans.first.size();i++)
+        fprintf(fout, "%d\t%d\n",i,ans.first[i]);
+	fclose(fout);
 }
 
-void runCommunityDetectionSampling(MappedGraph *graph)
+void runCommunityDetectionSampling(MappedGraph *graph,string input,double p,int K)
 {
     cout<<"\tRun community detection sampling algorithm"<<endl<<endl;
+    int i=input.size();
+	for(;i>=0;i--) if(input[i]=='/') break;
+	string filename=input.substr(i+1);
+	FILE* fout = fopen((  "output/community_detection_sampling/"+filename).c_str(), "w");
     time_t start_time = clock();
     Community_detection_sampling cd(graph);
-    cd.solve();
+    pair<vector<vid_t>,double> ans=cd.solve(p,K);
+	fprintf(fout, "modularity is %.4f\nvertex_id\tcommunity_id\n",ans.second);
+	for(unsigned int i=0;i<ans.first.size();i++)
+        fprintf(fout, "%d\t%d\n",i,ans.first[i]);
     time_t end_time = clock();
-    cout << "Running time of Community detection sampling: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
+    printf( "\tmodularity is %.4f\n",ans.second);
+	cout<< "\tRunning time of Community detection: "<<((end_time - start_time + 0.0) / CLOCKS_PER_SEC )<<endl;
+	fclose(fout);
+}
+
+void runCommunityDetectionSamplingTencent(MappedGraph *graph,string input,double p,int K)
+{
+    cout<<"\tRun community detection sampling algorithm"<<endl<<endl;
+	FILE* fout = fopen(  "output/community_detection_sampling/tencent_weibo", "w");
+    time_t start_time = clock();
+    Community_detection_sampling cd(graph);
+    pair<vector<vid_t>,double> ans=cd.solve(p,K);
+	fprintf(fout, "modularity is %.4f\nvertex_id\tcommunity_id\n",ans.second);
+	for(unsigned int i=0;i<ans.first.size();i++)
+        fprintf(fout, "%d\t%d\n",i,ans.first[i]);
+    time_t end_time = clock();
+	cout<< "\tRunning time of Community detection: "<<((end_time - start_time + 0.0) / CLOCKS_PER_SEC )<<endl;;
+	fclose(fout);
 }
 
 void runKCoreDecomposition(MappedGraph *graph)
@@ -246,7 +310,11 @@ void runKCoreDecomposition(MappedGraph *graph)
     cout<<"\tRun k-core decomposition algorithm"<<endl<<endl;
     time_t start_time = clock();
     K_Core_Decomposition cd(graph);
-    cd.solve();
+    vector<pair<vid_t, vid_t> > ans=cd.solve();
+    vid_t n=ans.size();
+    cout<<"No.  |  k-shell:"<<endl;
+    for (vid_t i=0;i<n;++i)
+    	cout<<ans[i].first<<' '<<ans[i].second<<endl;
     time_t end_time = clock();
     cout << "Running time of k-core decomposition: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 }
@@ -275,10 +343,27 @@ void makeTencentData()
         graph.AddEdge(y,x,0);
         if(i % 10000 == 0)
             cerr<<i<<" / "<<m<<endl;
-    }    
+    }
     graph.Save("./data/tencent_weibo");
 
 }
+
+void makeTencentDataForStreaming()
+{
+    ifstream fin("/tmp/tencent8.graph");
+    ofstream fout("./output/tencent8AddRandomWeight.graph");
+    int n,m,i,x,y,w;
+    fin>>n>>m;
+    fout<<n<<' '<<m<<endl;
+    for (i=1;i<=m;++i)
+    {
+	if (i%1000000==0) cout<<i<<endl;
+        fin>>x>>y>>w;
+        fout<<x<<' '<<y<<' '<<rand()%65536*1.0/65536<<endl;
+    }
+    fin.close();fout.close();
+}
+
 void makeExpertData()
 {
     GraphBuilder<int> graph;
@@ -316,7 +401,7 @@ void makeExpertData()
     MappedGraph* mgraph = MappedGraph::Open("./data/expert");
 
     vector< vector<double> > data;
-    
+
     Social_Solver solver(mgraph);
     vector<int> degrees = solver.Degree_Centrality();
 
@@ -394,7 +479,7 @@ void runExpertClassification(MappedGraph* graph)
             if(!used[r2]){
                 used[r2] = true;
                 parts_data.push_back(data[r2]);
-                parts_truth.push_back(ground_truth[r2]);            
+                parts_truth.push_back(ground_truth[r2]);
             }
         }
         learner.push_back(statistic::logistic_regression(part_data,part_truth));
@@ -439,14 +524,42 @@ void runPropensityScoreMatching(MappedGraph* graph){
     }
 
 }
+
+void runDynamicMinimumSpanningTree(string file_path)
+{
+    cout<<"\tRun dynamic minimum spanning tree algorithm"<<endl<<endl;
+    time_t start_time = clock();
+    dynamicMinimumSpanningTree cd(file_path);
+    resultMST*ans=cd.solve();
+    vid_t n=ans->edge.size(),i;
+    cout<<"algorithm done. Writing results at './output/dynamicMST.txt' ..."<<endl;
+    ofstream fout("./output/dynamicMST.txt");
+    time_t end_time = clock();
+    fout<<"Running time of dynamic MST algorithm: " << (end_time-start_time+0.0)/ CLOCKS_PER_SEC <<'s'<<endl;
+    fout<<"nodes:"<<ans->n<<",edges:"<<ans->m<<"\nmstValue:"<<ans->mstValue<<"\nvertex1 vertex2 weight:\n";
+    for (i=0;i<n;++i) if (ans->edge[i].first.first!=-1)
+    {
+    	if (i%100000==0) cout<<i<<endl;
+        fout<<ans->edge[i].first.first<<' '<<ans->edge[i].first.second<<' '<<ans->edge[i].second<<endl;
+    }
+    end_time = clock();
+    fout << "Running time of dynamic minimum spanning tree: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
+    fout.close();
+}
+
 int main(int argc, char **argv) {
     int vertexNum = 40;
     double edgeProb = 0.2;
     srand(time(NULL));
-  //  makeFakeData(vertexNum, edgeProb);
-   // makeExpertData();
-   // makeTencentData();
-   // return 0;
+
+//    makeFakeData(vertexNum, edgeProb);
+//	makeFakeDataForStreaming();
+//	makeTencentDataForStreaming();
+//	makeDataForStreaming();
+//  makeFakeData(vertexNum, edgeProb);
+ // makeExpertData();
+//    makeTencentData();
+//    return 0;
 	// parse arguments
 	Argument args;
 	if (! args.parse_args(argc, argv))
@@ -456,6 +569,10 @@ int main(int argc, char **argv) {
         return 1;
 
     string task = args.task();
+    string input=args.input();
+    double p=args.para_sample_probability();
+    int sub_task=args.para_cd_task();
+    int K =args.para_im_k();
     // generate a graph
     if (task == "gg") {
         makeFakeData(vertexNum, edgeProb);
@@ -465,6 +582,12 @@ int main(int argc, char **argv) {
         makeData();
         cout << "generate success!" << endl;
     }
+
+    if (task =="dm"){
+	runDynamicMinimumSpanningTree(args.input());
+	return 0;
+	}
+
     MappedGraph *graph = MappedGraph::Open(args.input().c_str());
     cout << "===== graph information =====" << endl;
     cout << "#vertices: " << graph -> VertexCount() << endl;
@@ -472,16 +595,16 @@ int main(int argc, char **argv) {
     cout << "=============================" << endl;
 
     if (task =="cd"){
-	runCommunityDetection(graph);
+	runCommunityDetection(graph,input,sub_task,K);
     }
 
     if (task =="cs"){
-	runCommunityDetectionSampling(graph);
+	runCommunityDetectionSampling(graph,input,p,K);
     }
-	
-	if (task =="kc"){
-	runKCoreDecomposition(graph);
-	}
+
+	if (task =="ct"){
+	runCommunityDetectionSamplingTencent(graph,input,p,K);
+    }
 
     // declare output file direction
     if (args.output().length() > 0) {
@@ -535,6 +658,11 @@ int main(int argc, char **argv) {
     if (task == "ec"){
         runExpertClassification(graph);
     }
+
+    if (task =="kc"){
+	runKCoreDecomposition(graph);
+	}
+
     if (task == "psm"){
         runPropensityScoreMatching(graph);
     }

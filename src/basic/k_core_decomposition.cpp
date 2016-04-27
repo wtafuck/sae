@@ -59,8 +59,6 @@ vector<pair<vid_t, vid_t> > K_Core_Decomposition::solve()
 	}
 	for (i=0;i<n;++i)
 		if (res[i]>=0)
-			printf("%d %d\n",i,res[i]),
 			ans.push_back(make_pair(i,res[i]));
-	printf("\n");
 	return ans;
 }
