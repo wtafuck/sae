@@ -88,15 +88,15 @@ vector<vid_t> allocate_vertex_with_shortest_path2(MappedGraph *graph,vector<vid_
         vector<vid_t> communityChange(n,1);
         for(int i=0;i<sample_num;i++)
             communityChange[i]=community[i];
-        vector <int> t(n,-1);
-        vector <vector<int>> dis(K+1,t);
-        for(int k=1;k<=K;k++)
-        for(int i=0;i<sample_num;i++)
+        vector <int> t(K,-1);
+        vector <vector<int>> dis(n,t);
+        for(int k=0;k<K;k++)
         {
             queue < int >  search_queue;
-            if (community[i]==k)
+            for(int i=0;i<sample_num;i++)
             {
-                    dis[k][i] = 0;
+                    if (community[i]==k+1)
+                    dis[i][k] = 0;
                     search_queue.push(i);
             }
             auto viter = graph->Vertices();
@@ -108,24 +108,18 @@ vector<vid_t> allocate_vertex_with_shortest_path2(MappedGraph *graph,vector<vid_
                 for(auto eiter = viter->OutEdges(); eiter->Alive(); eiter->Next())
                 {
                     int w = eiter->TargetId();
-                    if(dis[k][w] < 0)
+                    if(dis[w][k] < 0)
                     {
                         search_queue.push(w);
-                        dis[k][w] = dis[k][v] + 1;
+                        dis[w][k] = dis[v][k] + 1;
                     }
                 }
             }
         }
         for(int j=sample_num;j<n;j++)
         {
-                int min_value=10000,min_index=0;
-                 for(int k=1;k<=K;k++)
-                if(dis[k][j]>0&&dis[k][j]<min_value)
-                {
-                    min_value=dis[k][j];
-                    min_index=k;
-                }
-            communityChange[j]=community[min_index];
+            int min_index=distance(dis[j].begin(), max_element(dis[j].begin(), dis[j].end()));
+            communityChange[j]=min_index+1;
         }
         return communityChange;
 
