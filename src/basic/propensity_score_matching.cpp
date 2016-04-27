@@ -16,7 +16,7 @@ Propensity_Score_Matching::Propensity_Score_Matching(MappedGraph *graph)
 Propensity_Score_Matching::~Propensity_Score_Matching() {
 }
 
-vector<int> Propensity_Score_Matching::solve(int determine_coefficient)
+vector<int> Propensity_Score_Matching::solve(double determine_coefficient)
 {
     int n = graph->VertexCount(); assert(n >= 3);
     vector< vector<double> > properties;
@@ -36,7 +36,7 @@ vector<int> Propensity_Score_Matching::solve(int determine_coefficient)
     }
     // logistic regression
     vector<double> covarieties = logistic_regression(properties, is_treated), possibilities;
-    for(int i = 0;i < covarieties.size();i++) cerr<< covarieties[i]<<endl;
+    //for(int i = 0;i < covarieties.size();i++) cerr<< covarieties[i]<<endl;
     // pair the treated and untreated
     int m = properties[0].size();
     cnt = 0;
@@ -50,7 +50,7 @@ vector<int> Propensity_Score_Matching::solve(int determine_coefficient)
         value = 1.0 / (1 + exp(-value));// sigmoid
         possibilities.push_back(value);
     }
-    vector<int> pair_node(n);
+    vector<int> pair_node(n, -1);
     double mean = 0, treated_num = 0, sqr_deviation = 0;
     //calculate average
     for(int i = 0;i < n; i++) if(is_treated[i])
@@ -63,7 +63,7 @@ vector<int> Propensity_Score_Matching::solve(int determine_coefficient)
          mean += min_dis;
          treated_num ++;
     }
-    cerr << "treated_num = " << treated_num <<endl;
+    //cerr << "treated_num = " << treated_num <<endl;
     mean /= treated_num;
     //calculate sqr_deviation
     for(int i = 0; i < n; i++) if(is_treated[i])
@@ -77,7 +77,7 @@ vector<int> Propensity_Score_Matching::solve(int determine_coefficient)
     //delete pair_nodes which are not far enough
     vector<bool> used(n, false);
     vector<int> matched_nodes;
-    for(int i = 0; i < n; i++) if(is_treated[i])
+    for(int i = 0; i < n; i++) if(is_treated[i] && pair_node[i]!= -1)
     {
         double min_dis = abs(possibilities[i] - possibilities[ pair_node[i] ]);
         if(min_dis * min_dis <= 4 * sqr_deviation &&  !used[i] && !used[pair_node[i]])

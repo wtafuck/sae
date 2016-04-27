@@ -1,0 +1,92 @@
+===== graph information =====
+#vertices: 20002
+#edges: 60060
+=============================
+accuracy plainful: 0.9959new sample
+part accuracy: 0.55
+new sample
+part accuracy: 0.55
+new sample
+part accuracy: 0.6
+new sample
+part accuracy: 0.55
+new sample
+part accuracy: 0.8
+new sample
+part accuracy: 0.55
+new sample
+part accuracy: 0.55
+new sample
+part accuracy: 0.55
+new sample
+part accuracy: 0.45
+new sample
+part accuracy: 0.55
+boosting accuracy: 0.938456
+accuracy in non-experts: 0.941667
+accuracy in experts0.158537
+
+===== graph information =====
+#vertices: 20002
+#edges: 60060
+=============================
+accuracy plainful: 0.9959new sample
+part accuracy: 0.545455
+new sample
+part accuracy: 0.636364
+new sample
+part accuracy: 0.5
+new sample
+part accuracy: 0.545455
+new sample
+part accuracy: 0.590909
+new sample
+part accuracy: 0.5
+new sample
+part accuracy: 0.5
+new sample
+part accuracy: 0.636364
+new sample
+part accuracy: 0.545455
+new sample
+part accuracy: 0.590909
+new sample
+part accuracy: 0.545455
+new sample
+part accuracy: 0.545455
+boosting accuracy: 0.934707
+accuracy in non-experts: 0.937851
+accuracy in experts0.170732
+
+
+===== graph information =====
+#vertices: 20002
+#edges: 60060
+=============================
+accuracy plainful: 0.9959new sample
+part accuracy: 0.545455
+new sample
+part accuracy: 0.590909
+new sample
+part accuracy: 0.5
+new sample
+part accuracy: 0.681818
+new sample
+part accuracy: 0.545455
+new sample
+part accuracy: 0.590909
+new sample
+part accuracy: 0.545455
+new sample
+part accuracy: 0.454545
+new sample
+part accuracy: 0.5
+new sample
+part accuracy: 0.681818
+new sample
+part accuracy: 0.681818
+new sample
+part accuracy: 0.590909
+boosting accuracy: 0.879662
+accuracy in non-experts: 0.88248
+accuracy in experts0.195122

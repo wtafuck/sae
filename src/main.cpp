@@ -339,9 +339,12 @@ void makeExpertData()
         graph.AddVertex(i, data[i]);
     graph.Save("./data/expert");
 }
-void runPropensityScoreDifference(MappedGraph* graph)
+void runExpertClassification(MappedGraph* graph)
 {
-    ifstream fin("./resource/dm-experts.txt");
+    cout << "Please input the path of ground_truth file: "<<endl;
+    string ground_truth_file;
+    cin >> ground_truth_file;
+    ifstream fin(ground_truth_file.c_str());
     int t;
     vector<int> experts;
     std::vector<bool> ground_truth(graph->VertexCount(), false);
@@ -356,22 +359,24 @@ void runPropensityScoreDifference(MappedGraph* graph)
     std::vector< vector<double> > data, data2;
     vector<bool> ground_truth2;
     auto viter = graph->Vertices();
+
     for(int i = 0;i<graph->VertexCount();i++)
     {
         viter->MoveTo(i);
         data.push_back(sae::serialization::convert_from_string< vector<double> >(viter -> Data()) );
         data[i].push_back(data[i][0]);
     }
-    cout<< "accuracy plainful: "<< statistic::cross_validation_5_fold(data, ground_truth);
 
-    int set_number = 10, sample_number = 10;
+    statistic::cross_validation_5_fold(data, ground_truth);
+
+    int set_number = 12, sample_number = 11;
     std::vector< std::vector<double> > learner;
     vector< std::vector<double> > parts_data;
     std::vector<bool> parts_truth;
     std::vector<bool> used(graph->VertexCount(), false);
     for(int k = 0; k < set_number; k++)
     {
-        cout<< "new sample"<<endl;
+        //cout<< "new sample"<<endl;
         vector< std::vector<double> > part_data;
         std::vector<bool> part_truth;
         for(int i = 0;i<sample_number;i++)
@@ -396,7 +401,7 @@ void runPropensityScoreDifference(MappedGraph* graph)
         int tmp = 0;
         for(int i = 0; i < part_truth.size(); i++)
             tmp += (statistic::predict(learner[k], part_data[i])>0.5) == part_truth[i];
-        cerr<< "part accuracy: "<< tmp * 1.0/ part_truth.size() <<endl;
+        //cerr<< "part accuracy: "<< tmp * 1.0/ part_truth.size() <<endl;
      }
     //data = parts_data;
     //ground_truth = parts_truth;
@@ -408,39 +413,40 @@ void runPropensityScoreDifference(MappedGraph* graph)
                 ans += alpha[j] * (statistic::predict(learner[j], data[i]) > 0.5 ? 1 : -1);
             result[i] = ans < 0 ? false : true;
     }
-    int tmp = 0, right1 = 0, right2  = 0, sum1 = 0, sum2 = 0;
+    int tmp = 0, relevant1 = 0, relevant2  = 0, sum1 = 0, sum2 = 0, retrieved = 0, non_retrieved = 0;
     for(int i = 0; i < ground_truth.size(); i++)
     {
         if(result[i] == ground_truth[i]){
             tmp ++;
-            if(ground_truth[i]) right1++; else right2 ++;
+            if(ground_truth[i]) relevant1++; else relevant2 ++;
         }
         if(ground_truth[i]) sum1 ++; else sum2 ++;
+        if(result[i]) retrieved++; else non_retrieved++;
     }
-
-    cout << "boosting accuracy: "<< tmp * 1.0 / ground_truth.size() <<endl;
-    cout << "accuracy in experts" << right1* 1.0 / sum1 <<endl;
-/*  Propensity_Score_Matching  psm(graph);
-    vector<int> nodes = psm.solve(3);
-    cerr << nodes.size() <<endl;
-    for(int i = 0;i< nodes.size();i++)
-    {
-        viter->MoveTo(nodes[i]);
-        data2.push_back(sae::serialization::convert_from_string< vector<double> >(viter -> Data()) );
-        ground_truth2.push_back(ground_truth[nodes[i]]);
-    }
-    cout<< "accuracy : "<< statistic::cross_validation_5_fold(data2, ground_truth2);   */
+    statistic::information_retrieval(relevant1, relevant2, retrieved, non_retrieved);
 
 }
 
+void runPropensityScoreMatching(MappedGraph* graph){
+    Propensity_Score_Matching  psm(graph);
+    cout << "Please input the determine_coefficient: "<<endl;
+    int determine_coefficient = 0;
+    cin >> determine_coefficient;
+    vector<int> nodes = psm.solve(determine_coefficient);
+    for(int i = 0 ;i < nodes.size(); i += 2)
+    {
+        cout << nodes[i] << "---" << nodes[i + 1] <<endl;
+    }
+
+}
 int main(int argc, char **argv) {
     int vertexNum = 40;
     double edgeProb = 0.2;
     srand(time(NULL));
   //  makeFakeData(vertexNum, edgeProb);
    // makeExpertData();
-    makeTencentData();
-    return 0;
+   // makeTencentData();
+   // return 0;
 	// parse arguments
 	Argument args;
 	if (! args.parse_args(argc, argv))
@@ -526,8 +532,11 @@ int main(int argc, char **argv) {
     }
     if (task == "social")
         social_main(graph);
+    if (task == "ec"){
+        runExpertClassification(graph);
+    }
     if (task == "psm"){
-        runPropensityScoreDifference(graph);
+        runPropensityScoreMatching(graph);
     }
 
 	//testTable();

@@ -41,10 +41,10 @@ namespace statistic{
         //cerr<< "predict "<<value<<endl; 
         return value;
     }
-    double cross_validation_5_fold(std::vector< vector<double> >& data, const std::vector<bool> gound_truth)
+    void cross_validation_5_fold(std::vector< vector<double> >& data, const std::vector<bool> gound_truth)
     {
         int n = data.size(), m = data[0].size();
-        double ans = 0;
+        int relevant1 = 0, relevant2  = 0, retrieved = 0, non_retrieved = 0;
         assert(n >= 5);
         for(int i = 0 ; i < 5; i++){
             std::vector<vector<double> > part, valid;
@@ -59,13 +59,18 @@ namespace statistic{
             for(int j = 0;j < valid.size();j++)
             {
                 double value = predict(weights, valid[j]);
-                accuracy += valid_label[j] == (value > 0.5);
+                if(value > 0.5) {
+                    retrieved++;
+                    if(valid_label[j]) relevant1++;
+                }else{
+                    non_retrieved++;
+                    if(!valid_label[j]) relevant2++;
+                }
                 //cerr<< "accuracy "<< valid_label[j] << value <<endl;
             }
-            accuracy /= valid.size();
-            ans += accuracy;
         }
-        return ans / 5;
+        information_retrieval(relevant1, relevant2, retrieved, non_retrieved);   
+        cout<< "//-------------------------" <<endl;
     }
 
     std::vector<double> ada_boosting(std::vector< std::vector<double> >& data, std::vector< std::vector<double> >& learner, const std::vector<bool> gound_truth)
@@ -94,5 +99,13 @@ namespace statistic{
         //         ans += alpha[j] * (predict(learner[j], data[i]) > 0.5 ? 1 : -1);
         //     ret[i] = ans < 0 ? false : true;
         // }
+    }
+    void information_retrieval(int relevant1, int relevant2, int retrieved, int non_retrieved){
+        double precision, recall;
+        cout << "precision: "<< (precision = relevant1 * 1.0 / retrieved) <<endl;
+        cout << "recall: "<< (recall = relevant1 * 1.0 / (relevant1 + relevant2))<<endl;;
+        cout << "fall-out: " << (retrieved - relevant1)* 1.0 / (retrieved + non_retrieved - relevant1 - relevant2)<<endl;
+        cout << "F-score: " << 2.0 * precision * recall / (precision + recall)<<endl;
+
     }
 }
