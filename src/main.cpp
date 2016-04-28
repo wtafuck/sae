@@ -4,6 +4,7 @@
 #include "sampling/triangle_sampling.h"
 #include "sampling/community_detection_sampling.h"
 #include "basic/triangle_count.h"
+#include "basic/simrank.h"
 #include "basic/pagerank.h"
 #include "basic/degree_distribution.h"
 #include "basic/community_detection.h"
@@ -251,6 +252,7 @@ void runShortestPath(MappedGraph *graph, long long start, long long end, bool re
 
 void runCommunityDetection(MappedGraph *graph,string input,int sub_task,int K)
 {
+    system("mkdir -p output/community_detection");
     cout<<"\tRun community detection algorithm"<<endl<<endl;
     time_t start_time = clock();
     Community_detection cd(graph);
@@ -274,6 +276,7 @@ void runCommunityDetection(MappedGraph *graph,string input,int sub_task,int K)
 void runCommunityDetectionSampling(MappedGraph *graph,string input,double p,int K)
 {
     cout<<"\tRun community detection sampling algorithm"<<endl<<endl;
+     system("mkdir -p output/community_detection_sampling");
     int i=input.size();
 	for(;i>=0;i--) if(input[i]=='/') break;
 	string filename=input.substr(i+1);
@@ -287,21 +290,6 @@ void runCommunityDetectionSampling(MappedGraph *graph,string input,double p,int 
     time_t end_time = clock();
     printf( "\tmodularity is %.4f\n",ans.second);
 	cout<< "\tRunning time of Community detection: "<<((end_time - start_time + 0.0) / CLOCKS_PER_SEC )<<endl;
-	fclose(fout);
-}
-
-void runCommunityDetectionSamplingTencent(MappedGraph *graph,string input,double p,int K)
-{
-    cout<<"\tRun community detection sampling algorithm"<<endl<<endl;
-	FILE* fout = fopen(  "output/community_detection_sampling/tencent_weibo", "w");
-    time_t start_time = clock();
-    Community_detection_sampling cd(graph);
-    pair<vector<vid_t>,double> ans=cd.solve(p,K);
-	fprintf(fout, "modularity is %.4f\nvertex_id\tcommunity_id\n",ans.second);
-	for(unsigned int i=0;i<ans.first.size();i++)
-        fprintf(fout, "%d\t%d\n",i,ans.first[i]);
-    time_t end_time = clock();
-	cout<< "\tRunning time of Community detection: "<<((end_time - start_time + 0.0) / CLOCKS_PER_SEC )<<endl;;
 	fclose(fout);
 }
 
@@ -547,6 +535,27 @@ void runDynamicMinimumSpanningTree(string file_path)
     fout.close();
 }
 
+
+void runSimRank(MappedGraph *graph,string input,int sub_task,vid_t v,int K)
+{
+    cout<<"\tRun simrank algorithm"<<endl<<endl;
+    system("mkdir -p output/simrank");
+	int i=input.size();
+	for(;i>=0;i--) if(input[i]=='/') break;
+	string filename=input.substr(i+1);
+	FILE* fout = fopen((  "output/simrank/"+filename).c_str(), "w");
+    bool is_accurate=(sub_task==0);
+    SimRank sr(graph);
+    time_t start_time = clock();
+    vector<pair<double, vid_t> > ans=sr.solve(v,is_accurate);
+    time_t end_time = clock();
+    fprintf(fout,"%d\n",K);
+    for (int i=0;i<K;i++)
+            fprintf(fout,"%llu\t%f\n",ans[i].second,ans[i].first);
+    printf( "Running time of simrank algorithm: %.4f\n",(end_time - start_time + 0.0) / CLOCKS_PER_SEC);
+}
+
+
 int main(int argc, char **argv) {
     int vertexNum = 40;
     double edgeProb = 0.2;
@@ -573,6 +582,7 @@ int main(int argc, char **argv) {
     double p=args.para_sample_probability();
     int sub_task=args.para_cd_task();
     int K =args.para_im_k();
+    vid_t v=args.para_start();
     // generate a graph
     if (task == "gg") {
         makeFakeData(vertexNum, edgeProb);
@@ -602,8 +612,8 @@ int main(int argc, char **argv) {
 	runCommunityDetectionSampling(graph,input,p,K);
     }
 
-	if (task =="ct"){
-	runCommunityDetectionSamplingTencent(graph,input,p,K);
+    if (task =="sr"){
+        runSimRank(graph,input,sub_task,v,K);
     }
 
     // declare output file direction
