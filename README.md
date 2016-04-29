@@ -108,4 +108,4 @@ To run simrank approximately with querying node 2's Top 20 similar nodes
 #### Basic Social Analysis Tools
 ./bin/sae -i ./data/fake -t social
 
-then you can choose tasks listed on the screen.
+then choose tasks listed on the terminate.
