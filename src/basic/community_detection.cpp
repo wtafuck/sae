@@ -431,7 +431,7 @@ pair<vector<vid_t>,double> Community_detection::run_louvain_method(MappedGraph *
         for(auto eiter = viter->OutEdges(); eiter->Alive(); eiter->Next())
         {
             int j=eiter->GlobalId();
-            edges[j]=vector<vid_t> {i,eiter->TargetId(),1};
+            edges[j]=vector<vid_t> {static_cast<unsigned long long>(i),eiter->TargetId(),1};
             node_edges[i].push_back(j);
         }
     }
@@ -446,7 +446,7 @@ pair<vector<vid_t>,double> Community_detection::run_louvain_method(MappedGraph *
             for(int i=0;i<nn;i++)
             {
                 C[i]=i;
-                region[i]=vector<vid_t>{i};
+                region[i]=vector<vid_t>{static_cast<unsigned long long>(i)};
                 vector<vid_t> neighbor_list=node_edges[i];
                 for(int j=0;j<neighbor_list.size();j++)
                 {
@@ -540,7 +540,7 @@ pair<vector<vid_t>,double> Community_detection::run_louvain_method(MappedGraph *
             int c1=map_seq[C[s]],c2=map_seq[C[e]];
             if(c1!=c2)
             {
-                edges_new.push_back(vector<vid_t>{c1,c2,w});
+                edges_new.push_back(vector<vid_t>{static_cast<unsigned long long>(c1),static_cast<unsigned long long>(c2),static_cast<unsigned long long>(w)});
                 node_edges_new[c1].push_back(p);
                 p++;
             }
@@ -549,7 +549,7 @@ pair<vector<vid_t>,double> Community_detection::run_louvain_method(MappedGraph *
         for(int i=0;i<self_lop.size();i++)
         {
             if(self_lop[i]!=0){
-                edges_new.push_back(vector<vid_t>{i,i,self_lop[i]});
+                edges_new.push_back(vector<vid_t>{static_cast<unsigned long long>(i),static_cast<unsigned long long>(i),self_lop[i]});
                 node_edges_new[i].push_back(p);
                 p++;
             }
