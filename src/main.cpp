@@ -33,7 +33,7 @@ DEF_ARGUMENT_CLASS(
 	Argument,
 	std::string,	input,		"",				REQUIRED,   OPT_SLH(-i, --input, "input data"),
     std::string,    output,     "./output",     OPTIONAL,   OPT_SLH(-o, --output, "output direction"),
-    std::string,    task,       "",             OPTIONAL,   OPT_SLH(-t, --task, "declear task:\nim(inf-max),dd(degree),pr(PageRank),tr(triangle),sp(ShortestPath),social(social analysis)\n"),
+    std::string,    task,       "",             OPTIONAL,   OPT_SLH(-t, --task, "declear task:im(inf-max),pr(PageRank),tr(triangle),sp(ShortestPath),social(social-analysis)\n"),
     int,            para_im_k,  "0",            OPTIONAL,   OPT_SLH(-k, --seed, "seed size"),
     std::string,    para_edge_w,    "rand",     OPTIONAL,   OPT_SLH(-w, --weight, "edge weights:rand,const,deg\n"),
     double,         para_const, 0.0,            OPTIONAL,   OPT_SLH(-c, -constant, "constant value"),
@@ -308,9 +308,7 @@ void runKCoreDecomposition(MappedGraph *graph)
 }
 void makeTencentData()
 {
-    string file_name;
-    cin>> file_name;
-    ifstream fin(file_name.c_str());
+    ifstream fin("/tmp/tencent8.graph");
     int n,m;
     GraphBuilder<int> graph;
     fin>>n>>m;
@@ -593,8 +591,13 @@ int main(int argc, char **argv) {
         cout << "generate success!" << endl;
     }
 
+    if(task=="mt"){
+        makeTencentData();
+        cout << "generate success!" << endl;
+    }
+
     if (task =="dm"){
-	runDynamicMinimumSpanningTree(args.input());
+        runDynamicMinimumSpanningTree(args.input());
 	return 0;
 	}
 
