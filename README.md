@@ -9,6 +9,10 @@
 
 -t/--task: declare the task, with the options as
 
+md: make and save sae graph from file
+
+mt: make and save sae graph from file for tencent weibo data
+
 im: run influence maximization;
 
 [-k INT:K]: the size of seed set;
@@ -57,7 +61,7 @@ psm: propensity score matching;
 
 ec: expert classfication.
 
-#### Example
+#### Example for influence maximization
 The input file is placed at ./data/facebook
 
 To run influence maximization with constant edge weight as 0.5 and number of seed users as 10:
@@ -78,9 +82,18 @@ x2 y2 w2
 ##### Example for Community Detection
 The input file is placed at ./data/facebook
 
+
 To run community detection with community number as 5 and aglorithm 2:
 
 ./bin/sae -i ./data/facebook -t cd -k 5 -r 2
+
+-r 1 means using Girvan-Newman aglorithm
+
+-r 2 means using label propagation aglorithm
+
+-r 3 means using louvain method
+
+-r 4 means using k community core 
 
 To run community detection sampling method with community number as 5 and sample probability as 0.01:
 
