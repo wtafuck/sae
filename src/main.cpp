@@ -33,7 +33,7 @@ DEF_ARGUMENT_CLASS(
 	Argument,
 	std::string,	input,		"",				REQUIRED,   OPT_SLH(-i, --input, "input data"),
     std::string,    output,     "./output",     OPTIONAL,   OPT_SLH(-o, --output, "output direction"),
-    std::string,    task,       "",             OPTIONAL,   OPT_SLH(-t, --task, "declear task:\nim(inf-max),dd(degree),pr(PageRank),tr(triangle),sp(ShortestPath),social(social analysis)\n"),
+    std::string,    task,       "",             OPTIONAL,   OPT_SLH(-t, --task, "declear task:\nim(inf-max), dd(degree), pr(PageRank), tr(triangle), sp(ShortestPath), social(social analysis)\n"),
     int,            para_im_k,  "0",            OPTIONAL,   OPT_SLH(-k, --seed, "seed size"),
     std::string,    para_edge_w,    "rand",     OPTIONAL,   OPT_SLH(-w, --weight, "edge weights:rand,const,deg\n"),
     double,         para_const, 0.0,            OPTIONAL,   OPT_SLH(-c, -constant, "constant value"),
