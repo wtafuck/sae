@@ -109,7 +109,7 @@ void makeFakeData(int numVertex=10, double p = 0.1, int properties_num = 3) {
             pair<int ,int > edge = make_pair(i, j);
             int value = rand() % 50;
             graph.AddEdge(edge.first, edge.second, value);
-            graph.AddEdge(edge.second, edge.first, value);
+            //graph.AddEdge(edge.second, edge.first, value);
             //cout << edge.first << " " << edge.second << endl;
         }
     system("mkdir -p fake");
@@ -559,7 +559,8 @@ int main(int argc, char **argv) {
     double edgeProb = 0.2;
     srand(time(NULL));
 
-//    makeFakeData(vertexNum, edgeProb);
+    // makeFakeData(vertexNum, edgeProb);
+    // return 0;
 //	makeFakeDataForStreaming();
 //	makeTencentDataForStreaming();
 //	makeDataForStreaming();
