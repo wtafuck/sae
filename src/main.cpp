@@ -566,10 +566,11 @@ void runSimRank(MappedGraph *graph,string input,int sub_task,vid_t v,int K)
 
 int main(int argc, char **argv) {
     int vertexNum = 40;
-    double edgeProb = 0.2;
+    double edgeProb = 0.8;
     srand(time(NULL));
 
-//    makeFakeData(vertexNum, edgeProb);
+    // makeFakeData(vertexNum, edgeProb);
+    // return 0;
 //	makeFakeDataForStreaming();
 //	makeTencentDataForStreaming();
 //	makeDataForStreaming();

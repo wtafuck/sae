@@ -23,7 +23,7 @@ vector<double> bf_vec;
 
 void bf_matrix_mult(vector<double> & a , const vector<vector<double>> & b){
 	bf_vec.clear();
-	double q = 1;
+	double q = 0.85;
 	double sum;
 	// for (int i = 0; i < b.size(); ++ i){
 	// 	sum = (1-q)*1.0 / b.size();
@@ -35,27 +35,16 @@ void bf_matrix_mult(vector<double> & a , const vector<vector<double>> & b){
 	 	sum = (1-q);
 		for(int j = 0; j < b.size(); ++ j){
 			sum += q * a[j] * b[j][i];
-			if(b[i][j]!=0)cout<<sum<<endl;
 		}
-		cout<<"sum = "<<sum<<endl;
 		bf_vec.push_back(sum);
 	}
 	a = bf_vec;
-	cout<<"aaaa"<<endl;
-	for(int i = 0;i<a.size();i++)
-		cout<<a[i]<<" ";
-	cout<<endl;
 }
 
 vector<double> bf_matrix_run(vector<vector<double>> & matr , int iter_num) {
 	vector<double> pr_value;
 	pr_value.clear();
 	for (int i = 0; i < matr.size(); ++ i) pr_value.push_back(1.0);// / matr.size());
-	for(int i = 0;i < matr.size();i++){
-		for(int j = 0; j< matr[i].size();j++)
-			cout<<matr[i][j]<<" ";
-		cout<<endl;
-	}
 	for (; iter_num --; ) {
 		bf_matrix_mult(pr_value , matr);
 	}
@@ -73,7 +62,7 @@ vector<Pair> PageRank::solve() {
 		vid_t x = iter -> Source() -> GlobalId();
 		vid_t y = iter -> Target() -> GlobalId();
 		if (x == y) continue;
-		if (x > y) swap(x , y);
+		//if (x > y) swap(x , y);
 		if (edges.find(make_pair(x , y)) == edges.end() ){
 			edges[make_pair(x , y)] = true;
 		}
