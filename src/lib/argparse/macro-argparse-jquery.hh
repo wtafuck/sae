@@ -2626,10 +2626,9 @@
 					if (cur_line_width > cur_line.size() + next.length()) {
 						cur_line += next;
 					} else {
-                        cur_line += next;
 						ret.emplace_back(cur_line);
 						cur_line_width = line_width_max;
-						cur_line = "";
+						cur_line = w;
 					}
 			}
 			if (cur_line.length())
