@@ -34,7 +34,7 @@ DEF_ARGUMENT_CLASS(
 	std::string,	input,		"",				REQUIRED,   OPT_SLH(-i, --input, "input data"),
     std::string,    output,     "./output",     OPTIONAL,   OPT_SLH(-o, --output, "output direction"),
     std::string,    task,       "",             OPTIONAL,   OPT_SLH(-t, --task, "declear task:im(inf-max), dd(degree), pr(PageRank), tr(triangle), sp(ShortestPath), social(social analysis)\n"),
-    int,            para_im_k,  "0",            OPTIONAL,   OPT_SLH(-k, --seed, "seed size"),
+    int,            para_im_k,  "2",            OPTIONAL,   OPT_SLH(-k, --seed, "seed size"),
     std::string,    para_edge_w,    "rand",     OPTIONAL,   OPT_SLH(-w, --weight, "edge weights:rand,const,deg"),
     double,         para_const, 0.0,            OPTIONAL,   OPT_SLH(-c, -constant, "constant value"),
     int,            para_start, "0",            OPTIONAL,   OPT_SLH(-s, --start, "start point"),
@@ -109,7 +109,7 @@ void makeFakeData(int numVertex=10, double p = 0.1, int properties_num = 3) {
             pair<int ,int > edge = make_pair(i, j);
             int value = rand() % 50;
             graph.AddEdge(edge.first, edge.second, value);
-            //graph.AddEdge(edge.second, edge.first, value);
+            graph.AddEdge(edge.second, edge.first, value);
             //cout << edge.first << " " << edge.second << endl;
         }
     system("mkdir -p fake");
@@ -130,9 +130,9 @@ int GetOrInsert(const string& key)
     return id;
 }
 
-int makeData() {
+int makeData(string input,string output) {
     GraphBuilder<int> graph;
-    ifstream fin("./resource/Slashdot-2.txt");
+    ifstream fin(input.c_str());
     //ifstream fin("./resource/twitter_combined.txt");
     string buf;
     //for (int i = 0; i < 4; ++i) getline(fin, buf);
@@ -149,7 +149,7 @@ int makeData() {
         graph.AddEdge(b, a, 0);
     }
     cout << graph.VertexCount() << " " << graph.EdgeCount() << endl;
-    graph.Save("./data/Slashdot-2");
+    graph.Save(output.c_str());
     return 0;
 }
 
@@ -273,7 +273,7 @@ void runCommunityDetection(MappedGraph *graph,string input,int sub_task,int K)
 	fclose(fout);
 }
 
-void runCommunityDetectionSampling(MappedGraph *graph,string input,double p,int K)
+void runCommunityDetectionSampling(MappedGraph *graph,string input,int sub_task,double p,int K)
 {
     cout<<"\tRun community detection sampling algorithm"<<endl<<endl;
      system("mkdir -p output/community_detection_sampling");
@@ -283,14 +283,23 @@ void runCommunityDetectionSampling(MappedGraph *graph,string input,double p,int 
 	FILE* fout = fopen((  "output/community_detection_sampling/"+filename).c_str(), "w");
     time_t start_time = clock();
     Community_detection_sampling cd(graph);
-    pair<vector<vid_t>,double> ans=cd.solve(p,K);
+    //cd.test_community_sampling(graph,10,90,2,4);
+    pair<vector<vid_t>,double> ans=cd.solve(p,K,sub_task);
 	fprintf(fout, "modularity is %.4f\nvertex_id\tcommunity_id\n",ans.second);
 	for(unsigned int i=0;i<ans.first.size();i++)
         fprintf(fout, "%d\t%d\n",i,ans.first[i]);
     time_t end_time = clock();
-    printf( "\tmodularity is %.4f\n",ans.second);
+    printf( "\tmodularity is %.4f\n\n",ans.second);
 	cout<< "\tRunning time of Community detection: "<<((end_time - start_time + 0.0) / CLOCKS_PER_SEC )<<endl;
 	fclose(fout);
+}
+
+void testCommunityDetectionSampling(MappedGraph *graph,string input,int sub_task)
+{
+    cout<<"\tTestcommunity detection sampling algorithm"<<endl<<endl;
+    Community_detection_sampling cd(graph);
+    cd.test_community_sampling(graph,10,90,2,4,sub_task);
+
 }
 
 void runKCoreDecomposition(MappedGraph *graph)
@@ -306,9 +315,10 @@ void runKCoreDecomposition(MappedGraph *graph)
     time_t end_time = clock();
     cout << "Running time of k-core decomposition: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 }
-void makeTencentData()
+void makeTencentData(string input ,string output)
 {
-    ifstream fin("/tmp/tencent8.graph");
+    //input:    /tmp/tencent8.graph     output: ./data/tencent_weibo
+    ifstream fin(input);
     int n,m;
     GraphBuilder<int> graph;
     fin>>n>>m;
@@ -330,7 +340,7 @@ void makeTencentData()
         if(i % 10000 == 0)
             cerr<<i<<" / "<<m<<endl;
     }
-    graph.Save("./data/tencent_weibo");
+    graph.Save(output.c_str());
 
 }
 
@@ -559,8 +569,7 @@ int main(int argc, char **argv) {
     double edgeProb = 0.2;
     srand(time(NULL));
 
-    // makeFakeData(vertexNum, edgeProb);
-    // return 0;
+//    makeFakeData(vertexNum, edgeProb);
 //	makeFakeDataForStreaming();
 //	makeTencentDataForStreaming();
 //	makeDataForStreaming();
@@ -577,7 +586,14 @@ int main(int argc, char **argv) {
         return 1;
 
     string task = args.task();
-    string input=args.input();
+    string input= args.input();
+    printf("Input: %s\n", input.c_str());
+    // declare output file direction
+    if (args.output().length() > 0) {
+        output_dir = args.output().c_str();
+    }
+    system(("mkdir -p " + output_dir).c_str());
+    printf("Output: %s\n", output_dir.c_str());
     double p=args.para_sample_probability();
     int sub_task=args.para_cd_task();
     int K =args.para_im_k();
@@ -586,20 +602,23 @@ int main(int argc, char **argv) {
     if (task == "gg") {
         makeFakeData(vertexNum, edgeProb);
         cout << "generate success!" << endl;
+        return 0;
     }
     if (task == "md") {
-        makeData();
+        makeData(input, output_dir);
         cout << "generate success!" << endl;
+        return 0;
     }
 
     if(task=="mt"){
-        makeTencentData();
+        makeTencentData(input, output_dir);
         cout << "generate success!" << endl;
+        return 0;
     }
 
     if (task =="dm"){
         runDynamicMinimumSpanningTree(args.input());
-	return 0;
+	    return 0;
 	}
 
     MappedGraph *graph = MappedGraph::Open(args.input().c_str());
@@ -609,22 +628,20 @@ int main(int argc, char **argv) {
     cout << "=============================" << endl;
 
     if (task =="cd"){
-	runCommunityDetection(graph,input,sub_task,K);
+	    runCommunityDetection(graph,input,sub_task,K);
     }
 
     if (task =="cs"){
-	runCommunityDetectionSampling(graph,input,p,K);
+	    runCommunityDetectionSampling(graph,input,sub_task,p,K);
+    }
+
+    if (task =="ct"){
+	    testCommunityDetectionSampling(graph,input,sub_task);
     }
 
     if (task =="sr"){
         runSimRank(graph,input,sub_task,v,K);
     }
-
-    // declare output file direction
-    if (args.output().length() > 0) {
-        output_dir = args.output().c_str();
-    }
-    system(("mkdir -p " + output_dir).c_str());
 
     //declare task
 
@@ -674,7 +691,7 @@ int main(int argc, char **argv) {
     }
 
     if (task =="kc"){
-	runKCoreDecomposition(graph);
+	    runKCoreDecomposition(graph);
 	}
 
     if (task == "psm"){
@@ -687,4 +704,3 @@ int main(int argc, char **argv) {
 
     return 0;
 }
-

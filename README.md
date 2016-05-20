@@ -61,6 +61,20 @@ psm: propensity score matching;
 
 ec: expert classfication.
 
+#### Example for make data
+The input file is placed at ./data/facebook
+
+To transform data to SAE graph
+
+./bin/sae –i ./resource/facebook -o ./data/facebook -t md
+
+#### Example for make tencent data
+The input file is placed at /tmp/tencent8.graph
+
+To transform data to SAE graph
+
+./bin/sae –i ./tmp/tencent8.graph -o ./data/tencent_weibo -t mt
+
 #### Example for influence maximization
 The input file is placed at ./data/facebook
 
