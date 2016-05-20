@@ -586,8 +586,14 @@ int main(int argc, char **argv) {
         return 1;
 
     string task = args.task();
-    string input=args.input();
-    string output=args.output();
+    string input= args.input();
+    printf("Input: %s\n", input.c_str());
+    // declare output file direction
+    if (args.output().length() > 0) {
+        output_dir = args.output().c_str();
+    }
+    system(("mkdir -p " + output_dir).c_str());
+    printf("Output: %s\n", output_dir.c_str());
     double p=args.para_sample_probability();
     int sub_task=args.para_cd_task();
     int K =args.para_im_k();
@@ -596,20 +602,23 @@ int main(int argc, char **argv) {
     if (task == "gg") {
         makeFakeData(vertexNum, edgeProb);
         cout << "generate success!" << endl;
+        return 0;
     }
     if (task == "md") {
-        makeData(input ,output);
+        makeData(input, output_dir);
         cout << "generate success!" << endl;
+        return 0;
     }
 
     if(task=="mt"){
-        makeTencentData(input ,output);
+        makeTencentData(input, output_dir);
         cout << "generate success!" << endl;
+        return 0;
     }
 
     if (task =="dm"){
         runDynamicMinimumSpanningTree(args.input());
-	return 0;
+	    return 0;
 	}
 
     MappedGraph *graph = MappedGraph::Open(args.input().c_str());
@@ -619,26 +628,20 @@ int main(int argc, char **argv) {
     cout << "=============================" << endl;
 
     if (task =="cd"){
-	runCommunityDetection(graph,input,sub_task,K);
+	    runCommunityDetection(graph,input,sub_task,K);
     }
 
     if (task =="cs"){
-	runCommunityDetectionSampling(graph,input,sub_task,p,K);
+	    runCommunityDetectionSampling(graph,input,sub_task,p,K);
     }
 
     if (task =="ct"){
-	testCommunityDetectionSampling(graph,input,sub_task);
+	    testCommunityDetectionSampling(graph,input,sub_task);
     }
 
     if (task =="sr"){
         runSimRank(graph,input,sub_task,v,K);
     }
-
-    // declare output file direction
-    if (args.output().length() > 0) {
-        output_dir = args.output().c_str();
-    }
-    system(("mkdir -p " + output_dir).c_str());
 
     //declare task
 
@@ -688,7 +691,7 @@ int main(int argc, char **argv) {
     }
 
     if (task =="kc"){
-	runKCoreDecomposition(graph);
+	    runKCoreDecomposition(graph);
 	}
 
     if (task == "psm"){
