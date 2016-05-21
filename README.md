@@ -66,21 +66,21 @@ The input file is placed at ./data/facebook
 
 To transform data to SAE graph
 
-./bin/sae –i ./resource/facebook -o ./data/facebook -t md
+./bin/sae -i ./resource/facebook -o ./data/facebook -t md
 
 #### Example for make tencent data
 The input file is placed at /tmp/tencent8.graph
 
 To transform data to SAE graph
 
-./bin/sae –i ./tmp/tencent8.graph -o ./data/tencent_weibo -t mt
+./bin/sae -i ./tmp/tencent8.graph -o ./data/tencent_weibo -t mt
 
 #### Example for influence maximization
 The input file is placed at ./data/facebook
 
 To run influence maximization with constant edge weight as 0.5 and number of seed users as 10:
 
-./bin/sae –i ./data/facebook –t im –k 10 –w const –c 0.5
+./bin/sae -i ./data/facebook -t im -k 10 -w const -c 0.5
 
 #### Example for dynamicMST
 The input file is placed at ./data.txt
@@ -92,7 +92,7 @@ x1 y1 w1
 x2 y2 w2
 ...
 
-./bin/sae –i ./data.txt –t dm
+./bin/sae -i ./data.txt -t dm
 
 case 2:
 data.txt contains only all the edges of the graph:
@@ -100,7 +100,7 @@ x1 y1 w1
 x2 y2 w2
 ...
 
-./bin/sae –i ./data.txt –t dmraw
+./bin/sae -i ./data.txt -t dmraw
 
 case 3:
 data.txt contains the edges of the graph, but without weight. Program will give a random weight each edge:
@@ -108,7 +108,7 @@ x1 y1
 x2 y2
 ...
 
-./bin/sae –i ./data.txt –t dmrawnw
+./bin/sae -i ./data.txt -t dmrawnw
 
 
 
