@@ -39,7 +39,7 @@ DEF_ARGUMENT_CLASS(
     double,         para_const, 0.0,            OPTIONAL,   OPT_SLH(-c, -constant, "constant value"),
     int,            para_start, "0",            OPTIONAL,   OPT_SLH(-s, --start, "start point"),
     int,            para_end, "1",            OPTIONAL,   OPT_SLH(-e, --end, "end point"),
-    int,            para_cd_task, 4,            OPTIONAL,   OPT_SLH(-r, --run, "run community detection sub task"),
+    int,            para_cd_task, 1,            OPTIONAL,   OPT_SLH(-r, --run, "run community detection sub task"),
     double,            para_sample_probability, 0.01,            OPTIONAL,   OPT_SLH(-p, --probability, "sample probability for aglorithm")
 );
 
@@ -130,7 +130,7 @@ int GetOrInsert(const string& key)
     return id;
 }
 
-int makeData(string input,string output) {
+int makeData(string input) {
     GraphBuilder<int> graph;
     ifstream fin(input.c_str());
     //ifstream fin("./resource/twitter_combined.txt");
@@ -149,10 +149,12 @@ int makeData(string input,string output) {
         graph.AddEdge(b, a, 0);
     }
     cout << graph.VertexCount() << " " << graph.EdgeCount() << endl;
-    graph.Save(output.c_str());
+    int i=input.size();
+	for(;i>=0;i--) if(input[i]=='/') break;
+	string filename=input.substr(i);
+    graph.Save((output_dir+filename).c_str());
     return 0;
 }
-
 int makeDataForStreaming(){
 	ifstream fin("./resource/facebook.txt");
     long long n=0,m=0,x,y;
@@ -249,10 +251,8 @@ void runShortestPath(MappedGraph *graph, long long start, long long end, bool re
     time_t end_time = clock();
     cout << "Running time of Shortest_Path: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 }
-
 void runCommunityDetection(MappedGraph *graph,string input,int sub_task,int K)
 {
-    system("mkdir -p output/community_detection");
     cout<<"\tRun community detection algorithm"<<endl<<endl;
     time_t start_time = clock();
     Community_detection cd(graph);
@@ -262,11 +262,7 @@ void runCommunityDetection(MappedGraph *graph,string input,int sub_task,int K)
     printf( "\tmodularity is %.4f\n",ans.second);
     printf( "\tRunning time of Community detection: %.4f\n",(end_time - start_time + 0.0) / CLOCKS_PER_SEC );
 
-	int i=input.size();
-	for(;i>=0;i--) if(input[i]=='/') break;
-	string filename=input.substr(i+1);
-	FILE* fout = fopen((  "output/community_detection/"+filename).c_str(), "w");
-	fprintf(fout, "Running time of Community detection: %.4f\n",(end_time - start_time + 0.0) / CLOCKS_PER_SEC );
+	FILE* fout = fopen((  output_dir+"/community_detection").c_str(), "w");
 	fprintf(fout, "modularity is %.4f\nvertex_id\tcommunity_id\n",ans.second);
 	for(unsigned int i=0;i<ans.first.size();i++)
         fprintf(fout, "%d\t%d\n",i,ans.first[i]);
@@ -276,11 +272,7 @@ void runCommunityDetection(MappedGraph *graph,string input,int sub_task,int K)
 void runCommunityDetectionSampling(MappedGraph *graph,string input,int sub_task,double p,int K)
 {
     cout<<"\tRun community detection sampling algorithm"<<endl<<endl;
-     system("mkdir -p output/community_detection_sampling");
-    int i=input.size();
-	for(;i>=0;i--) if(input[i]=='/') break;
-	string filename=input.substr(i+1);
-	FILE* fout = fopen((  "output/community_detection_sampling/"+filename).c_str(), "w");
+	FILE* fout = fopen((  output_dir+"/community_detection_sampling").c_str(), "w");
     time_t start_time = clock();
     Community_detection_sampling cd(graph);
     //cd.test_community_sampling(graph,10,90,2,4);
@@ -301,7 +293,6 @@ void testCommunityDetectionSampling(MappedGraph *graph,string input,int sub_task
     cd.test_community_sampling(graph,10,90,2,4,sub_task);
 
 }
-
 void runKCoreDecomposition(MappedGraph *graph)
 {
     cout<<"\tRun k-core decomposition algorithm"<<endl<<endl;
@@ -315,7 +306,7 @@ void runKCoreDecomposition(MappedGraph *graph)
     time_t end_time = clock();
     cout << "Running time of k-core decomposition: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 }
-void makeTencentData(string input ,string output)
+void makeTencentData(string input )
 {
     //input:    /tmp/tencent8.graph     output: ./data/tencent_weibo
     ifstream fin(input);
@@ -340,7 +331,7 @@ void makeTencentData(string input ,string output)
         if(i % 10000 == 0)
             cerr<<i<<" / "<<m<<endl;
     }
-    graph.Save(output.c_str());
+    graph.Save((output_dir+"tencent_weibo").c_str());
 
 }
 
@@ -553,11 +544,7 @@ void runDynamicMinimumSpanningTree(int mode,string file_path)
 void runSimRank(MappedGraph *graph,string input,int sub_task,vid_t v,int K)
 {
     cout<<"\tRun simrank algorithm"<<endl<<endl;
-    system("mkdir -p output/simrank");
-	int i=input.size();
-	for(;i>=0;i--) if(input[i]=='/') break;
-	string filename=input.substr(i+1);
-	FILE* fout = fopen((  "output/simrank/"+filename).c_str(), "w");
+	FILE* fout = fopen((  output_dir+"/simRank").c_str(), "w");
     bool is_accurate=(sub_task==0);
     SimRank sr(graph);
     time_t start_time = clock();
@@ -568,7 +555,6 @@ void runSimRank(MappedGraph *graph,string input,int sub_task,vid_t v,int K)
             fprintf(fout,"%llu\t%f\n",ans[i].second,ans[i].first);
     printf( "Running time of simrank algorithm: %.4f\n",(end_time - start_time + 0.0) / CLOCKS_PER_SEC);
 }
-
 
 int main(int argc, char **argv) {
     int vertexNum = 40;
@@ -612,13 +598,13 @@ int main(int argc, char **argv) {
         return 0;
     }
     if (task == "md") {
-        makeData(input, output_dir);
+        makeData(input);
         cout << "generate success!" << endl;
         return 0;
     }
 
     if(task=="mt"){
-        makeTencentData(input, output_dir);
+        makeTencentData(input);
         cout << "generate success!" << endl;
         return 0;
     }
@@ -632,7 +618,7 @@ int main(int argc, char **argv) {
 	runDynamicMinimumSpanningTree(1,args.input());
 	return 0;
     }
-	
+
     if (task=="dmrawnw"){
 	runDynamicMinimumSpanningTree(2,args.input());
 	return 0;

@@ -40,7 +40,10 @@ vector<vector<double> > simrankwithsum(vector<vector<double> > s,vector<vector<i
                 double simsum=0;
                 for(int l=0;l<indegree[j].size();l++)
                     simsum+=part[i][indegree[j][l]];
-                temp[i][j]=C*simsum/(indegree[i].size()*indegree[j].size());
+                if(indegree[i].size()==0||indegree[j].size()==0)
+                    temp[i][j]=0;
+                else
+                    temp[i][j]=C*simsum/(indegree[i].size()*indegree[j].size());
             }
 
        s=temp;

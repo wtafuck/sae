@@ -62,18 +62,18 @@ psm: propensity score matching;
 ec: expert classfication.
 
 #### Example for make data
-The input file is placed at ./data/facebook
+The input file is placed at ./data/facebook,and output directory is ./data
 
 To transform data to SAE graph
 
-./bin/sae -i ./resource/facebook -o ./data/facebook -t md
+./bin/sae –i ./resource/facebook -o ./data-t md
 
 #### Example for make tencent data
-The input file is placed at /tmp/tencent8.graph
+The input file is placed at /tmp/tencent8.graph,and output directory is ./data
 
 To transform data to SAE graph
 
-./bin/sae -i ./tmp/tencent8.graph -o ./data/tencent_weibo -t mt
+./bin/sae –i ./tmp/tencent8.graph -o ./data -t mt
 
 #### Example for influence maximization
 The input file is placed at ./data/facebook
@@ -133,16 +133,16 @@ To run community detection sampling method with community number as 5 and sample
 
 ./bin/sae -i ./data/facebook -t cs -k 5 -p 0.01
 
-##### Example for SimRank
+#### Example for SimRank
 The input file is placed at ./data/facebook
 
-To run simrank precisely with querying node 1's Top 50 similar nodes
+To run simrank precisely with querying node 1's Top 50 similar nodes,which use Partial Sums Memoization algorithm
 
-./bin/sae -i ./data/facebook -t sr -r 0 -v 1 -k 50
+./bin/sae -i ./data/facebook -t sr -r 0 -s 1 -k 50
 
-To run simrank approximately with querying node 2's Top 20 similar nodes
+To run simrank approximately with querying node 2's Top 20 similar nodes,which use Random Walk algorithm
 
-./bin/sae -i ./data/facebook -t sr -r 1 -v 2 -k 20
+./bin/sae -i ./data/facebook -t sr -r 1 -s 2 -k 20
 
 ##### Example for Propensity Score Matching
 ./bin/sae -i ./data/expert -t psm
