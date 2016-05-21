@@ -521,12 +521,18 @@ void runPropensityScoreMatching(MappedGraph* graph){
 
 }
 
-void runDynamicMinimumSpanningTree(string file_path)
+void runDynamicMinimumSpanningTree(int mode,string file_path)
 {
     cout<<"\tRun dynamic minimum spanning tree algorithm"<<endl<<endl;
     time_t start_time = clock();
     dynamicMinimumSpanningTree cd(file_path);
-    resultMST*ans=cd.solve();
+    resultMST* ans;
+    if (mode==0)
+	ans=cd.solve();
+    if (mode==1)
+	ans=cd.solve_raw(1);
+    if (mode==2)
+	ans=cd.solve_raw(0);
     vid_t n=ans->edge.size(),i;
     cout<<"algorithm done. Writing results at './output/dynamicMST.txt' ..."<<endl;
     ofstream fout("./output/dynamicMST.txt");
@@ -539,7 +545,7 @@ void runDynamicMinimumSpanningTree(string file_path)
         fout<<ans->edge[i].first.first<<' '<<ans->edge[i].first.second<<' '<<ans->edge[i].second<<endl;
     }
     end_time = clock();
-    fout << "Running time of dynamic minimum spanning tree: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
+    fout << "Running time of dynamic minimum spanning tree: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << "s"<<endl;
     fout.close();
 }
 
@@ -618,10 +624,19 @@ int main(int argc, char **argv) {
     }
 
     if (task =="dm"){
-        runDynamicMinimumSpanningTree(args.input());
+        runDynamicMinimumSpanningTree(0,args.input());
 	    return 0;
 	}
 
+    if (task=="dmraw"){
+	runDynamicMinimumSpanningTree(1,args.input());
+	return 0;
+    }
+	
+    if (task=="dmrawnw"){
+	runDynamicMinimumSpanningTree(2,args.input());
+	return 0;
+    }
     MappedGraph *graph = MappedGraph::Open(args.input().c_str());
     cout << "===== graph information =====" << endl;
     cout << "#vertices: " << graph -> VertexCount() << endl;

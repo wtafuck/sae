@@ -85,6 +85,7 @@ To run influence maximization with constant edge weight as 0.5 and number of see
 #### Example for dynamicMST
 The input file is placed at ./data.txt
 
+case 1:
 data.txt contains vertex number n, edge number m and all the edges of the graph:
 n m
 x1 y1 w1
@@ -92,6 +93,25 @@ x2 y2 w2
 ...
 
 ./bin/sae –i ./data.txt –t dm
+
+case 2:
+data.txt contains only all the edges of the graph:
+x1 y1 w1
+x2 y2 w2
+...
+
+./bin/sae –i ./data.txt –t dmraw
+
+case 3:
+data.txt contains the edges of the graph, but without weight. Program will give a random weight each edge:
+x1 y1
+x2 y2
+...
+
+./bin/sae –i ./data.txt –t dmrawnw
+
+
+
 
 ##### Example for Community Detection
 The input file is placed at ./data/facebook
