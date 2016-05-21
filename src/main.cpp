@@ -130,7 +130,7 @@ int GetOrInsert(const string& key)
     return id;
 }
 
-int makeData(string input) {
+int makeData(string input,string output) {
     GraphBuilder<int> graph;
     ifstream fin(input.c_str());
     //ifstream fin("./resource/twitter_combined.txt");
@@ -152,7 +152,7 @@ int makeData(string input) {
     int i=input.size();
 	for(;i>=0;i--) if(input[i]=='/') break;
 	string filename=input.substr(i);
-    graph.Save((output_dir+filename).c_str());
+    graph.Save((output).c_str());
     return 0;
 }
 int makeDataForStreaming(){
@@ -306,7 +306,7 @@ void runKCoreDecomposition(MappedGraph *graph)
     time_t end_time = clock();
     cout << "Running time of k-core decomposition: " << (end_time - start_time + 0.0) / CLOCKS_PER_SEC << endl;
 }
-void makeTencentData(string input )
+void makeTencentData(string input ,string output)
 {
     //input:    /tmp/tencent8.graph     output: ./data/tencent_weibo
     ifstream fin(input);
@@ -331,7 +331,7 @@ void makeTencentData(string input )
         if(i % 10000 == 0)
             cerr<<i<<" / "<<m<<endl;
     }
-    graph.Save((output_dir+"tencent_weibo").c_str());
+    graph.Save((output_dir).c_str());
 
 }
 
@@ -598,13 +598,13 @@ int main(int argc, char **argv) {
         return 0;
     }
     if (task == "md") {
-        makeData(input);
+        makeData(input,output_dir);
         cout << "generate success!" << endl;
         return 0;
     }
 
     if(task=="mt"){
-        makeTencentData(input);
+        makeTencentData(input,output_dir);
         cout << "generate success!" << endl;
         return 0;
     }
