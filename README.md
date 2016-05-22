@@ -53,7 +53,7 @@ sr: run SimRank ;
 
 [-r INT:run]: choose a algorithm for SimRank;
 
-[-s INT:start]: the querying node;
+[-s INT:start]: the querying node,which should be exits in the dataset;
 
 [-k INT:K]: the number of Top K;
 

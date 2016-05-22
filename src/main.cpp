@@ -119,6 +119,8 @@ void makeFakeData(int numVertex=10, double p = 0.1, int properties_num = 3) {
 
 
 map<string, int> nodeMap;
+map<vid_t, vid_t> mapToReal;
+map<vid_t, vid_t> mapToSae;
 
 int GetOrInsert(const string& key)
 {
@@ -126,7 +128,9 @@ int GetOrInsert(const string& key)
     if (it != nodeMap.end())
         return it -> second;
     int id = (int) nodeMap.size();
+    int real_id=atoi(key.c_str());
     nodeMap.insert(make_pair(key, id));
+    mapToReal.insert(make_pair(id, real_id));
     return id;
 }
 
@@ -149,12 +153,31 @@ int makeData(string input,string output) {
         graph.AddEdge(b, a, 0);
     }
     cout << graph.VertexCount() << " " << graph.EdgeCount() << endl;
-    int i=input.size();
-	for(;i>=0;i--) if(input[i]=='/') break;
-	string filename=input.substr(i);
     graph.Save((output).c_str());
+    FILE* fout = fopen(( output+"_map").c_str(), "w");
+    map<vid_t, vid_t>::iterator it;
+    for(it=mapToReal.begin();it!=mapToReal.end();++it)
+    {
+        fprintf(fout,"%llu\t%llu\n",it->first,it->second);
+    }
+    fclose(fout);
     return 0;
 }
+
+void readNodeMap(string input)
+{
+    mapToReal.clear();
+    mapToSae.clear();
+    ifstream fin((input+"_map").c_str());
+    vid_t x,y;
+    while(1){
+        if (!(fin >> x >> y)) break;
+        mapToReal.insert(make_pair(x,y));
+         mapToSae.insert(make_pair(y,x));
+    }
+}
+
+
 int makeDataForStreaming(){
 	ifstream fin("./resource/facebook.txt");
     long long n=0,m=0,x,y;
@@ -264,8 +287,9 @@ void runCommunityDetection(MappedGraph *graph,string input,int sub_task,int K)
 
 	FILE* fout = fopen((  output_dir+"/community_detection").c_str(), "w");
 	fprintf(fout, "modularity is %.4f\nvertex_id\tcommunity_id\n",ans.second);
+	readNodeMap(input);
 	for(unsigned int i=0;i<ans.first.size();i++)
-        fprintf(fout, "%d\t%d\n",i,ans.first[i]);
+        fprintf(fout, "%llu\t%llu\n",mapToReal[i],ans.first[i]);
 	fclose(fout);
 }
 
@@ -278,8 +302,9 @@ void runCommunityDetectionSampling(MappedGraph *graph,string input,int sub_task,
     //cd.test_community_sampling(graph,10,90,2,4);
     pair<vector<vid_t>,double> ans=cd.solve(p,K,sub_task);
 	fprintf(fout, "modularity is %.4f\nvertex_id\tcommunity_id\n",ans.second);
+	readNodeMap(input);
 	for(unsigned int i=0;i<ans.first.size();i++)
-        fprintf(fout, "%d\t%d\n",i,ans.first[i]);
+        fprintf(fout, "%llu\t%llu\n",mapToReal[i],ans.first[i]);
     time_t end_time = clock();
     printf( "\tmodularity is %.4f\n\n",ans.second);
 	cout<< "\tRunning time of Community detection: "<<((end_time - start_time + 0.0) / CLOCKS_PER_SEC )<<endl;
@@ -548,11 +573,13 @@ void runSimRank(MappedGraph *graph,string input,int sub_task,vid_t v,int K)
     bool is_accurate=(sub_task==0);
     SimRank sr(graph);
     time_t start_time = clock();
-    vector<pair<double, vid_t> > ans=sr.solve(v,is_accurate);
+    readNodeMap(input);
+    vector<pair<double, vid_t> > ans=sr.solve(mapToSae[v],is_accurate);
     time_t end_time = clock();
+    readNodeMap(input);
     fprintf(fout,"%d\n",K);
     for (int i=0;i<K;i++)
-            fprintf(fout,"%llu\t%f\n",ans[i].second,ans[i].first);
+            fprintf(fout,"%llu\t%f\n",mapToReal[ans[i].second],ans[i].first);
     printf( "Running time of simrank algorithm: %.4f\n",(end_time - start_time + 0.0) / CLOCKS_PER_SEC);
 }
 
