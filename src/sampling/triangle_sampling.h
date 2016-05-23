@@ -1,11 +1,14 @@
 #include "storage/mgraph.h"
 #include "solver/solver.h"
-
-class Triangle_Sampling:public sae::Solver<int> {
+#include <cstring>
+class Triangle_Sampling//:public sae::Solver<int> {
+{
 public:
-	Triangle_Sampling(sae::io::MappedGraph *graph);
+	Triangle_Sampling(std::string path);
 	~Triangle_Sampling();
     double solve(double p, double q);
     double solve(double q);
+	std::string filePath;
 private:
 };
+
