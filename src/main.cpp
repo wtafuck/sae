@@ -2,6 +2,8 @@
 #include "solver/solver.h"
 #include "solver/solverForStreaming.h"
 #include "sampling/triangle_sampling.h"
+#include "sampling/length2_sampling.h"
+#include "sampling/average_degree_sampling.h"
 #include "sampling/community_detection_sampling.h"
 #include "basic/triangle_count.h"
 #include "basic/simrank.h"
@@ -582,6 +584,28 @@ void runSimRank(MappedGraph *graph,string input,int sub_task,vid_t v,int K)
             fprintf(fout,"%llu\t%f\n",mapToReal[ans[i].second],ans[i].first);
     printf( "Running time of simrank algorithm: %.4f\n",(end_time - start_time + 0.0) / CLOCKS_PER_SEC);
 }
+void runAverageDegreeTest(double p , string filePath){
+     cout <<"\nRun Average Degree Test.\n";
+     average_degree_sampling ans(filePath);
+
+	//double p = 0.;;
+	ans.solve(p,p);
+	//cout << "\n" << p << "\n";
+     cout <<"\nEnd Average Degree Test.\n";
+}
+void runLength2Test(double p , string filePath){
+     cout << "\nRun Length 2 Test.\n";
+     length2_sampling ans(filePath);
+     ans.solve(p,p);
+     cout << "\nEnd Length 2 Test.\n";
+}
+
+void runTriangleTest(double p , string filePath){
+	cout << "\nRun Triangle Test.\n";
+	Triangle_Sampling ans(filePath);
+	ans.solve(p,p);
+	cout << "\nEnd Traingle Test.\n";
+}
 
 int main(int argc, char **argv) {
     int vertexNum = 40;
@@ -635,7 +659,18 @@ int main(int argc, char **argv) {
         cout << "generate success!" << endl;
         return 0;
     }
-
+    if (task == "sad"){
+	    runAverageDegreeTest(args.para_sample_probability(),args.input());
+        return 0;
+    }
+    if (task == "sle"){
+        runLength2Test(args.para_sample_probability(),args.input());
+        return 0;
+    }
+    if (task == "str"){
+        runTriangleTest(args.para_sample_probability(),args.input());
+        return 0;
+    }
     if (task =="dm"){
         runDynamicMinimumSpanningTree(0,args.input());
 	    return 0;
