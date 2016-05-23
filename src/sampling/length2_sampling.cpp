@@ -7,13 +7,15 @@
 #include <map>
 #include <set>
 #include <utility>
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 using namespace sae::io;
 
 typedef pair<vid_t , vid_t> PAVT;
-length2_sampling::length2_sampling(MappedGraph *graph)
-	:Solver(graph)
+length2_sampling::length2_sampling(string path)
+	:filePath(path)
 {
 }
 
@@ -26,15 +28,32 @@ double Random1()
 }
 
 double length2_sampling::solve(double p , double q){
-    map<pair<vid_t, vid_t>, bool> edges;
-    for (auto itr = graph->Edges(); itr->Alive(); itr->Next()) {
-        vid_t x = itr->Source()->GlobalId(), y = itr->Target()->GlobalId();
-        if (x == y) continue;
+    time_t startTime = clock();
+    freopen(filePath.c_str(),"r",stdin);
+   vid_t n , m; double weight;
+	scanf("%llu%llu",&n,&m);
+	map<pair<vid_t, vid_t>, bool> edges;
+   /* for (vid_t i = 0; i < m; ++ i) {
+        //vid_t x = itr->Source()->GlobalId(), y = itr->Target()->GlobalId();
+        vid_t x,y; int weight;
+        scanf("%llu%llu%d",&x , &y , &weight);
+	
+        int has_a = 1;
+        int has_b = 1;
+   
+            has_a = node_set.count(a);
+            has_b = node_set.count(b);
+            if (has_a + has_b == 0)
+                r = p;
+        
+        double coin = Random1();
+	if (x == y) continue;
 	if (x > y) swap(x , y);
 	if (edges.find(make_pair(x, y)) == edges.end()) {
                 edges[make_pair(x, y)] = true;
         }
     }
+*/
     srand(time(0));
     double Ans = 0;
     set<vid_t> node_set;
@@ -42,12 +61,10 @@ double length2_sampling::solve(double p , double q){
     map<vid_t , size_t> node_map;
     same_node_sum.clear();
     int sum = 0;
-    for (auto itr = edges.begin(); itr != edges.end(); ++itr) {
-        auto edge = itr -> first;
-        vid_t a = edge.first;
-        vid_t b = edge.second;
-        if (a >= b)  continue;
-        edge = make_pair(a, b);
+    for (vid_t iter=0; iter<m; ++ iter) {
+        //auto edge = itr -> first;
+        vid_t a,b;double weight;
+	scanf("%llu%llu%llf",&a,&b,&weight);
         double r = q;
         int has_a = 1;
         int has_b = 1;
@@ -76,9 +93,12 @@ double length2_sampling::solve(double p , double q){
                 Ans += (1.0 / r) * same_node_sum[node_map[b]];
                 same_node_sum[node_map[b]] += 1.0/r;
             }
-        }   
+        }
+   
  }
     printf("%d edges have been sampled.\n" , sum);
+    	time_t endTime = clock();
+	cout << "Ans:"<< Ans << "time:" << (endTime-startTime+0.0)/CLOCKS_PER_SEC<< endl;
     return Ans;
 }
 
