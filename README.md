@@ -155,4 +155,13 @@ To run simrank approximately with querying node 2's Top 20 similar nodes,which u
 #### Basic Social Analysis Tools
 ./bin/sae -i ./data/fake -t social
 
+#### Example for Sampling Algorithm
+To get the average degree of graph
+./bin/sae -i ./data.txt -t sad -p 0.001
+To get the length2 numbers of graph
+./bin/sae -i ./data.txt -t sle -p 0.001
+To get the triangle numbers of graph
+./bin/sae -i ./data.txt -t str -p 0.001
+
+
 then choose tasks listed on the terminate.
