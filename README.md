@@ -156,6 +156,13 @@ To run simrank approximately with querying node 2's Top 20 similar nodes,which u
 ./bin/sae -i ./data/fake -t social
 
 #### Example for Sampling Algorithm
+the input file of sampling algorithm is data.txt
+data.txt contains vertex number n, edge number m  and all edges of graph:
+x1 y1 w1
+x2 y2 w2
+
+the sampling probability of sampling algorithm is 0.001 , this probability can be adjusted according to actual situation.  
+
 To get the average degree of graph
 
 ./bin/sae -i ./data.txt -t sad -p 0.001
